@@ -12,6 +12,12 @@ class GameState:
         self.whiteToMove = True
         self.movelog = []
 
+    def makeMove(self, move):
+        self.board[move.startRow][move.startCol]= "--"
+        self.board[move.endRow][move.endCol]= move.pieceMoved
+        self.movelog.append(move)#log the move so we can undo it later
+        self.magentaToMove = not self.magentaToMove #swap players
+
 class Move():
     # maps keys to values
     # key : value
@@ -31,4 +37,13 @@ class Move():
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
         self.pieceCaptured = board[self.endRow][self.endCol]
+
+    def getChessNotation(self):
+        # you can add to make this like real chess notation
+        return self.getRankFile(self.startRow, self.startCol) + self.getRankFile(self.endRow, self.endCol)
+
+
+    def getRankFile(self, r, c):
+        return self.colsToFiles[c] + self.rowsToRanks[r]
+
 
