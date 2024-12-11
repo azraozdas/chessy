@@ -2,8 +2,8 @@ import pygame
 import pygame as p
 
 from chessy import chessEngine
-
-p.init()
+def main():
+ p.init()
 WIDTH = HEIGHT = 512
 DIMENSION = 8
 SQ_SIZE = HEIGHT // DIMENSION
@@ -47,5 +47,5 @@ def loadimages():
                 for c in range(DIMENSION):
                     color = colors[((r + c) % 2)]
                     p.draw.rect(screen, color, p.Rect(c * SQ_SIZE, c * SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
-        main()
+if __name__ == "__main__":
+    main()
