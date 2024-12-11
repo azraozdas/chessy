@@ -1,3 +1,4 @@
+import pygame
 import pygame as p
 
 from chessy import chessEngine
@@ -48,4 +49,3 @@ def loadimages():
                     p.draw.rect(screen, color, p.Rect(c * SQ_SIZE, c * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
         main()
-

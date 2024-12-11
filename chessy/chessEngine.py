@@ -11,3 +11,4 @@ class GameState:
             ["Rook_W", "Knight_W", "Bishop_W", "Queen_W", "King_W", "Bishop_W", "Knight_W", "Rook_W"]]
         self.whiteToMove = True
         self.movelog = []
+        print("heşşo")
