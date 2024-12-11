@@ -18,22 +18,35 @@ def loadImages():
 def main():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
-    screen.fill(p.Color("white"))
+    screen.fill(p.Color("magenta"))
     gs = chessEngine.GameState()
     loadImages()
     running = True
-
+    sqSelected = () #no square is selected, keep track of the şast click of theuser (tuple: (row,col))
+    playerClicks =[]#keep track of player clicks (two tuples: [(6,4), (4,4)])
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos() #(x,y) location of mouse
+                col =location[0]//SQ_SIZE
+                row =location[1]//SQ_SIZE
+                if sqSelected == (row, col): #the user clicked the same square twice
+                    sqSelected = () #deselect
+                    playerClicks = [] #clear player clicks
+                else:
+                    sqSelected = (row, col)
+                    playerClicks.append(sqSelected) #append for both 1st and 2nd clicks
+                if len(playerClicks) == 2: #after 2nd click
+
 
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
 
 def drawBoard(screen):
-    colors = [p.Color("white"), p.Color("gray")]
+    colors = [p.Color("magenta"), p.Color("aqua")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[((r + c) % 2)]
