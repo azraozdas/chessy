@@ -51,7 +51,7 @@ def main():
         p.display.flip()
 
 def drawBoard(screen):
-    colors = [p.Color("magenta"), p.Color("aqua")]
+    colors = [p.Color("magenta"), p.Color("pink")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[((r + c) % 2)]
