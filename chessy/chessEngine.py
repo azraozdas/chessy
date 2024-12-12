@@ -93,7 +93,6 @@ class GameState:
                 else: #off board
                     break
 
-
     # get all the Knight moves for the knight located at row, col and add these moves to the list
     def getKnightMoves(self, r, c, moves):
         knightMoves = ((-2, -1), (-2, 1), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
