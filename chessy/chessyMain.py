@@ -20,6 +20,8 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("magenta"))
     gs = chessEngine.GameState()
+    validMoves = gs.getValidMoves()
+    moveMade = False #flag variable for when a move is made
     loadImages()
     running = True
     sqSelected = () #no square is selected, keep track of the şast click of theuser (tuple: (row,col))
@@ -28,6 +30,7 @@ def main():
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            #moouse handler
             elif e.type == p.MOUSEBUTTONDOWN:
                 location = p.mouse.get_pos() #(x,y) location of mouse
                 col =location[0]//SQ_SIZE
@@ -38,20 +41,31 @@ def main():
                 else:
                     sqSelected = (row, col)
                     playerClicks.append(sqSelected) #append for both 1st and 2nd clicks
-                if len(playerClicks) == 2: #after 2nd click
+                if len(playerClicks) == 2:
                     move = chessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
                     print(move.getChessNotation())
+                    if move in validMoves:
+                        gs.makeMove(move)
+                        moveMade = True
                     gs.makeMove(move)
                     sqSelected = () #reset user clicks
                     playerClicks = []
+            #key handlers
+            elif e.type == p.KEYDOWN:
+                if e.key == p.K_z: #undo when "z" is pressed
+                    gs.undoMove()
+                    moveMade = True
 
 
+        if moveMade:
+            validMoves = gs.getValidMoves()
+            moveMade = False
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
 
 def drawBoard(screen):
-    colors = [p.Color("magenta"), p.Color("pink")]
+    colors = [p.Color("magenta"), p.Color("green")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[((r + c) % 2)]
