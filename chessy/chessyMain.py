@@ -53,8 +53,6 @@ def main():
                 if e.key == p.K_z: #undo when "z" is pressed
                     gs.undoMove()
 
-
-
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
@@ -77,5 +75,5 @@ def drawPieces(screen, board):
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
-if __name__ == "__main__":
-    main()
+                if __name__ == "__main__":
+                    main()
