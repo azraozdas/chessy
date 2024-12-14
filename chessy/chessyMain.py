@@ -1,7 +1,6 @@
 import pygame as p
 from chessy import chessEngine
 
-
 p.init()
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -18,39 +17,35 @@ def loadImages():
 def main():
     screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
-    screen.fill(p.Color("magenta"))
     gs = chessEngine.GameState()
-    validMoves = gs.getValidMoves()
     loadImages()
     running = True
-    sqSelected = () #no square is selected, keep track of the şast click of theuser (tuple: (row,col))
-    playerClicks =[]#keep track of player clicks (two tuples: [(6,4), (4,4)])
+    sqSelected = ()  # no square is selected
+    playerClicks = []  # keep track of player clicks (two tuples: [(6,4), (4,4)])
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
-            #moouse handler
             elif e.type == p.MOUSEBUTTONDOWN:
-                location = p.mouse.get_pos() #(x,y) location of mouse
-                col =location[0]//SQ_SIZE
-                row =location[1]//SQ_SIZE
-                if sqSelected == (row, col): #the user clicked the same square twice
-                    sqSelected = () #deselect
-                    playerClicks = [] #clear player clicks
+                location = p.mouse.get_pos()
+                col = location[0] // SQ_SIZE
+                row = location[1] // SQ_SIZE
+                if sqSelected == (row, col):  # the user clicked the same square twice
+                    sqSelected = ()  # deselect
+                    playerClicks = []  # clear player clicks
                 else:
                     sqSelected = (row, col)
-                    playerClicks.append(sqSelected) #append for both 1st and 2nd clicks
+                    playerClicks.append(sqSelected)
                 if len(playerClicks) == 2:
                     move = chessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
                     print(move.getChessNotation())
                     gs.makeMove(move)
-                    sqSelected = () #reset user clicks
+                    sqSelected = ()  # reset user clicks
                     playerClicks = []
                 else:
-                    playerClicks =[sqSelected]
-            #key handlers
+                    playerClicks = [sqSelected]
             elif e.type == p.KEYDOWN:
-                if e.key == p.K_z: #undo when "z" is pressed
+                if e.key == p.K_z:  # undo when "z" is pressed
                     gs.undoMove()
 
         drawGameState(screen, gs)
@@ -75,5 +70,5 @@ def drawPieces(screen, board):
             if piece != "--":
                 screen.blit(IMAGES[piece], p.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
-                if __name__ == "__main__":
-                    main()
+if __name__ == "__main__":
+    main()
