@@ -23,7 +23,7 @@ def main():
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
     clock = p.time.Clock()
-    screen.fill(p.Color("magenta"))
+    screen.fill(p.Color("purple"))
     game_state = chessEngine.GameState()
     valid_moves = game_state.getValidMoves()
     move_made = False
@@ -157,7 +157,7 @@ def highlightSquares(screen, game_state, valid_moves, square_selected):
 
 
 def drawBoard(screen):
-    colors = [p.Color("magenta"), p.Color("pink")]
+    colors = [p.Color("purple"), p.Color("pink")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[(r + c) % 2]
