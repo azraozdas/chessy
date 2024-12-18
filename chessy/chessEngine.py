@@ -46,7 +46,7 @@ class GameState:
         """
         self.board[move.start_row][move.start_col] = "--"
         self.board[move.end_row][move.end_col] = move.piece_moved
-        self.move_log.append(move)  # log the move so we can undo it later
+        self.move_log.append(move.getChessNotation())  # Hamle loguna ekle
         self.white_to_move = not self.white_to_move  # switch players
         # update king's location if moved
         if move.piece_moved == "wK":
@@ -592,6 +592,34 @@ class Move:
 
         self.is_capture = self.piece_captured != "--"
         self.moveID = self.start_row * 1000 + self.start_col * 100 + self.end_row * 10 + self.end_col
+
+        # Yeni eklenen fonksiyon
+
+    def getMoveSummary(self):
+        """Hamle özetini cümle olarak döner."""
+        piece_names = {'p': 'Pawn', 'R': 'Rook', 'N': 'Knight', 'B': 'Bishop', 'Q': 'Queen', 'K': 'King'}
+
+        # Taşın rengini belirle
+        def getPieceNameWithColor(piece):
+            if piece.startswith('w'):
+                return f"White {piece_names.get(piece[1], 'Unknown')}"
+            elif piece.startswith('b'):
+                return f"Black {piece_names.get(piece[1], 'Unknown')}"
+            return "Unknown Piece"
+
+        start_square = self.getRankFile(self.start_row, self.start_col)
+        end_square = self.getRankFile(self.end_row, self.end_col)
+
+        # Taş adı ve rengi belirleme
+        piece_moved = getPieceNameWithColor(self.piece_moved)
+        summary = f"{piece_moved} moved from {start_square} to {end_square}"
+
+        # Eğer taş yiyorsa
+        if self.piece_captured != "--":
+            piece_captured = getPieceNameWithColor(self.piece_captured)
+            summary += f" and captured {piece_captured}!"
+
+        return summary
 
     def __eq__(self, other):
         """
