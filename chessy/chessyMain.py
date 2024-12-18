@@ -6,6 +6,7 @@ import chessEngine  # chessEngine modülünü doğru bir şekilde içe aktardık
 # Oyun Ayarları
 p.init()
 p.mixer.init()
+check_channel = p.mixer.Channel(1)
 check_sound = p.mixer.Sound("sounds/tension.MP3")
 move_sound = p.mixer.Sound("sounds/move-pieces.mp3")
 start_game_sound = p.mixer.Sound("sounds/game-start.mp3")
@@ -61,7 +62,6 @@ def loadImages():
 
 # Yıldızları oluşturur
 def generateStars(x, y, count=30):
-    print(f"Stars are generating... x:{x}, y:{y}")
     for _ in range(count):
         stars.append({
             'x': x,
@@ -186,8 +186,18 @@ def mainMenu():
                 BACKGROUND_IMAGE = p.transform.scale(p.image.load("images/backgroundphoto.png"), (event.w, event.h))
             elif event.type == p.MOUSEBUTTONDOWN:
                 mouse_click = True
+            elif event.type == p.KEYDOWN:
+                global game_state  # Global değişkeni kullanacağımızı belirtiyoruz
+                if event.key == p.K_z:  # Z tuşu ile hamle geri al
+                    game_state.undoMove()
+                    move_made = True
+                    is_check = False  # Şah durumunu sıfırla
+                elif event.key == p.K_r:  # R tuşu ile hamle geri al
+                    if len(game_state.move_log) > 0:  # Eğer hamle logunda hamle varsa
+                        game_state.undoMove()
+                        move_made = True
+                        is_check = False  # Şah durumunu sıfırla
 
-        # Buton çizimi ve animasyon kontrolü
         hover_play = play_button and play_button.collidepoint(mouse_pos)
         clicked_play = hover_play and mouse_click
 
@@ -358,14 +368,15 @@ def main():
             valid_moves = game_state.getValidMoves()
             move_made = False
 
-            # Şah durumunu kontrol et
             if game_state.inCheck():
                 if not is_check:  # Şah durumu yeni başladıysa
-                    check_sound.play()  # Şah sesini çal
+                    check_channel.play(check_sound, loops=-1)  # Şah müziğini başlat
                     is_check = True
+                elif not check_channel.get_busy():  # Eğer müzik bitmişse, tekrar başlat
+                    check_channel.play(check_sound, loops=-1)
             else:
                 if is_check:  # Şah durumu sona erdiğinde
-                    check_sound.stop()  # Şah sesini durdur
+                    check_channel.stop()  # Şah müziğini durdur
                     is_check = False
 
         drawGameState(screen, game_state, square_selected)
@@ -374,23 +385,40 @@ def main():
         clock.tick(MAX_FPS)
 
 
-def drawValidMoves(screen, moves):
-    """Taşın geçerli hamlelerini ekrana çizen fonksiyon."""
+def drawValidMoves(screen, moves, board):
+    """
+    Taşın geçerli hamlelerini sadece doğru karelere çizen fonksiyon.
+    """
     for move in moves:
         row, col = move.end_row, move.end_col
+        piece = board[move.start_row][move.start_col]
+        target_square = board[row][col]
 
-        if move.piece_captured != "--":
-            color = (255, 186, 0)  # Taş yenebiliyorsa bu renk
+        # Piyon hareketi için kontrol
+        if piece[1] == "p":  # Eğer taş bir piyon ise
+            # Çapraz hareket kontrolü: sadece rakip taş varsa veya en passant hareketi ise
+            if abs(move.start_col - move.end_col) == 1 and move.start_row != move.end_row:
+                if target_square == "--" and not move.is_enpassant_move:
+                    continue  # Eğer çaprazda taş yoksa highlight etme
+            # Düz hareket kontrolü: boş kare olmalı
+            elif move.start_col == move.end_col:
+                if target_square != "--":  # Boş olmayan kareleri geçersiz say
+                    continue
+
+        # Boş kareler için mavi, yenebilecek taşlar için turuncu renk
+        if target_square == "--":
+            color = (110, 203, 245)  # Mavi (boş kare)
         else:
-            color = (110, 203, 245)  # Koyumsu cyan renk
+            color = (255, 186, 0)  # Turuncu (rakip taş)
 
-        # Yeni bir yüzey (Surface) oluştur
-        highlight_surface = p.Surface((SQUARE_SIZE, SQUARE_SIZE))  # Her kare için ayrı bir yüzey
-        highlight_surface.set_alpha(150)  # Şeffaflık: 0 (tam şeffaf) - 255 (tam opak)
-        highlight_surface.fill(color)  # Renk ayarı (ya sarı ya da mor)
+        # Highlight yüzeyi
+        highlight_surface = p.Surface((SQUARE_SIZE, SQUARE_SIZE))
+        highlight_surface.set_alpha(150)
+        highlight_surface.fill(color)
 
-        # Yüzeyi tahtanın doğru konumuna çiz
+        # Kareyi ekrana çiz
         screen.blit(highlight_surface, (col * SQUARE_SIZE, row * SQUARE_SIZE))
+
 
 def drawGameState(screen, game_state, square_selected):
     """Tahta ve taşları çizen fonksiyon."""
@@ -403,7 +431,7 @@ def drawGameState(screen, game_state, square_selected):
             piece_color = game_state.board[row][col][0]
             if (piece_color == 'w' and game_state.white_to_move) or (piece_color == 'b' and not game_state.white_to_move):
                 valid_moves = [move for move in game_state.getValidMoves() if move.start_row == row and move.start_col == col]
-                drawValidMoves(screen, valid_moves)  # Geçerli hamleleri sarıya renklendir
+                drawValidMoves(screen, valid_moves, game_state.board)  # board parametresi eklendi
 
 def drawBoard(screen):
     """Tahtanın arkaplanını çizen fonksiyon."""
@@ -554,7 +582,7 @@ def drawMoveLog(screen, move_log):
     max_lines = max_text_height // line_height  # Panelin içine sığabilecek maksimum hamle sayısı
 
     # Son sığabilecek hamleleri göster
-    recent_moves = move_log[-max_lines:]
+    recent_moves = move_log[-max_lines:]  # Move log'un son kısmını al
 
     for i, move in enumerate(recent_moves):  # Son hamleleri göster
         text_surface = font.render(move, True, (255, 255, 0))  # Sarı renk
@@ -563,6 +591,9 @@ def drawMoveLog(screen, move_log):
 
     return return_button  # Return to Menu butonunu döndür
 
-if __name__ == "__main__":
-    mainMenu()
-    main()
+# Ana kodda is_returning_from_game kontrolü
+if not is_returning_from_game:  # Eğer Return to Menu'den gelinmiyorsa çiz
+
+    if __name__ == "__main__":
+        mainMenu()
+        main()
