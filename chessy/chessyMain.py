@@ -7,6 +7,9 @@ import chessEngine  # chessEngine modülünü doğru bir şekilde içe aktardık
 p.init()
 p.mixer.init()
 check_sound = p.mixer.Sound("sounds/tension.MP3")
+move_sound = p.mixer.Sound("sounds/move-pieces.mp3")
+start_game_sound = p.mixer.Sound("sounds/game-start.mp3")
+click_sound = p.mixer.Sound("sounds/click.mp3")
 
 # Ekran çözünürlüğünü otomatik algıla
 screen_info = p.display.Info()
@@ -137,15 +140,15 @@ def drawMenu(play_button, exit_button, hover_play=False, clicked_play=False, hov
                                     exit_center_y - (exit_text_surface.get_height() // 2)))
 
     # The Creators Bölümü (Sol Tarafta)
-    creators_font = p.font.SysFont("comicsans", 30, True)
-    creators_title = creators_font.render("The creators of Chessy:", True, (255, 255, 255))
+    creators_font = p.font.SysFont("comicsans", 15, True)
+    creators_title = creators_font.render("The creators of Chessy:", True, (255, 255, 0))
     screen.blit(creators_title, (20, 20))  # Sol üst köşeye başlık yazılır
 
     # İsimler Listesi
     names = ["Müslüm Selim Aksahin", "Azra Özdas", "Dilay Tarhan"]
     y_offset = 60  # Başlangıçta başlıktan biraz aşağı
     for name in names:
-        name_surface = creators_font.render(f"- {name}", True, (255, 255, 255))
+        name_surface = creators_font.render(f"- {name}", True, (255, 255, 0))
         screen.blit(name_surface, (40, y_offset))  # İsimleri çiz
         y_offset += 40  # Her bir isim için 40 piksel aşağı kaydır
 
@@ -158,9 +161,12 @@ def drawMenu(play_button, exit_button, hover_play=False, clicked_play=False, hov
 
     return play_button, exit_button
 
+# En üstte global değişkeni tanımlayın
+is_returning_from_game = False  # Return to Menu'den dönüldüğünü kontrol eder
 # Ana menü
 def mainMenu():
-    global screen, BACKGROUND_IMAGE  # Arkaplanı güncellemek için global tanımlama
+    global screen, BACKGROUND_IMAGE, is_returning_from_game  # Tüm global değişkenleri en başta tanımla
+
     running = True
     play_button = None
     exit_button = None
@@ -192,16 +198,20 @@ def mainMenu():
         screen.blit(BACKGROUND_IMAGE, (0, 0))
 
         # Butonları çiz
-        play_button, exit_button = drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit,
-                                            clicked_exit)
+        play_button, exit_button = drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit, clicked_exit)
 
-        drawStars()  # Yıldızları ekrana çiz
+        # Yıldızları çizerken Return to Menu'den gelindiğini kontrol et
+        if not is_returning_from_game:
+            drawStars()  # Sadece Return to Menu'den gelinmediğinde yıldızları ekrana çiz
+
         p.display.flip()
         clock.tick(60)
 
         # Play Butonuna Tıklandıysa
         if clicked_play:
+            is_returning_from_game = False  # Return to Menu'den dönmüyoruz, bu yüzden bayrağı sıfırla
             generateStars(play_button.centerx, play_button.centery)
+            click_sound.play()  # 🔊 Butona tıklama sesi çal
             start_time = p.time.get_ticks()
             while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye
                 screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı çiz
@@ -219,20 +229,32 @@ def mainMenu():
             p.display.flip()
             p.time.wait(1000)  # Loading ekranında 1 saniye bekle
 
-            main()  # Ana oyunu başlat
+            start_game_sound.play()  # 🎉 Oyun başlıyor, sesi çal
+            main()
 
         # Exit Butonuna Tıklandıysa
         if clicked_exit:
-            generateStars(exit_button.centerx, exit_button.centery)
+            click_sound.play()  # 🔊 Click sesi ekleniyor
+            generateStars(exit_button.centerx,
+                          exit_button.centery)  # Yıldız animasyonu sadece çıkış butonunun merkezinde olur
             start_time = p.time.get_ticks()
-            while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye
-                screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı çiz
-                drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit, clicked_exit)
-                drawStars()
+            while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye sürsün
+                screen.fill((0, 0, 0))  # Ekranı temizle (ana menüden bağımsız yıldızlar)
+                drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit,
+                         clicked_exit)  # Yalnızca menüyü çiz
+                drawStars()  # Yıldızları ekrana çiz
                 p.display.flip()
                 clock.tick(60)
+
+            is_returning_from_game = False  # Return to Menu bayrağını sıfırla
             p.quit()
             sys.exit()
+
+def loadSounds():
+    """Ses dosyalarını yükleyen fonksiyon."""
+    global move_sound
+    p.mixer.init()  # Pygame ses motorunu başlat
+    check_sound = p.mixer.Sound("sounds/tension.MP3")  # Ses dosyasını yükle
 
 
 def main():
@@ -240,6 +262,7 @@ def main():
     global screen, BOARD_WIDTH, BOARD_HEIGHT, SQUARE_SIZE  # Global değişkenler
     p.init()
     loadImages()
+    loadSounds()  # 🎉 Sesleri yükle
 
     # Başlangıç ekran ayarları
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.RESIZABLE)
@@ -270,11 +293,20 @@ def main():
             elif event.type == p.MOUSEBUTTONDOWN:  # Taş hareketlerini işleme
                 mouse_pos = p.mouse.get_pos()
 
-                # Eğer Return to Menu butonuna tıklanırsa
                 if return_button and return_button.collidepoint(mouse_pos):
+                    click_sound.play()  # 🔊 Click sesi ekleniyor
+                    generateStars(return_button.centerx,
+                                  return_button.centery)  # Yıldız animasyonu butonun ortasında başlat
+                    start_time = p.time.get_ticks()
+                    while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye sürsün
+                        screen.fill((0, 0, 0))  # Ekranı temizle (ana menüden bağımsız yıldızlar)
+                        drawMoveLog(screen, [])  # Sadece return to menu kısmını çiz
+                        drawStars()  # Yıldızları ekrana çiz
+                        p.display.flip()
+                        clock.tick(60)
+                    mainMenu()  # Yıldız animasyonu tamamlandıktan sonra ana menüye dön
                     return  # Ana menüye dönmek için döngüyü sonlandır
 
-                # Kullanıcının tıkladığı satır ve sütunu al
                 col = mouse_pos[0] // SQUARE_SIZE
                 row = mouse_pos[1] // SQUARE_SIZE
 
@@ -290,19 +322,37 @@ def main():
                         move = chessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
                         for i in range(len(valid_moves)):
                             if move == valid_moves[i]:
+                                move_sound.play()  # 🔊 Hareket sesi çalıyor
                                 animateMove(move, game_state, screen, clock)
                                 game_state.board[move.start_row][move.start_col] = "--"
+
                                 if move.piece_captured != "--":
-                                    celebratePiece(move.piece_moved, move.end_row, move.end_col, screen, clock, game_state)
+                                    celebratePiece(move.piece_moved, move.end_row, move.end_col, screen, clock,
+                                                   game_state)
+
                                 game_state.makeMove(valid_moves[i])
+
                                 if move.getMoveSummary() not in game_state.move_log:
                                     game_state.move_log.append(move.getMoveSummary())
+
                                 move_made = True
                                 square_selected = ()
                                 player_clicks = []
                                 break
                         if not move_made:
                             player_clicks = [square_selected]
+
+            elif event.type == p.KEYDOWN:
+                if event.key == p.K_z:
+                    game_state.undoMove()
+                    move_made = True
+                elif event.key == p.K_r:
+                    game_state = chessEngine.GameState()
+                    valid_moves = game_state.getValidMoves()
+                    square_selected = ()
+                    player_clicks = []
+                    move_made = False
+                    game_over = False
 
         if move_made:
             valid_moves = game_state.getValidMoves()
@@ -465,11 +515,26 @@ def drawMoveLog(screen, move_log):
     clicked = hover and mouse_click
 
     if hover:
-        button_width = original_button_width - 10  # Boyutu kücült
-        button_height = original_button_height - 10  # Boyutu kücült
+        button_width = original_button_width - 10  # Boyutu küçült
+        button_height = original_button_height - 10  # Boyutu küçült
+
+    global is_returning_from_game  # Global bayrağı fonksiyonun başında tanımla
     if clicked:
-        button_width = original_button_width   # Boyutu normal
-        button_height = original_button_height   # Boyutu normal
+        click_sound.play()  # 🔊 Click sesi çal
+        generateStars(button_x + button_width // 2, button_y + button_height // 2)  # Yıldızları butonun merkezinde başlat
+        start_time = p.time.get_ticks()
+        while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye sürsün
+            screen.fill((0, 0, 0))  # Ekranı temizle
+            drawMoveLog(screen, move_log)  # Tekrar log ekranını çiz
+            drawStars()  # Yıldızları ekrana çiz
+            p.display.flip()
+            clock.tick(60)  # 60 FPS
+            is_returning_from_game = True  # Return to Menu'den ana menüye dönüyoruz, bayrağı ayarla
+
+        button_width = original_button_width  # Boyutu normale döndür
+        button_height = original_button_height  # Boyutu normale döndür
+        mainMenu()  # Ana menüye geç
+        return  # Ana menüye dönmek için döngüyü sonlandır
 
     # Sabit merkezi korumak için X ve Y konumlarını buna göre ayarla
     centered_x = button_x + (original_button_width // 2) - (button_width // 2)
