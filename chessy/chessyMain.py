@@ -525,7 +525,6 @@ def drawMoveLog(screen, move_log):
         start_time = p.time.get_ticks()
         while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye sürsün
             screen.fill((0, 0, 0))  # Ekranı temizle
-            drawMoveLog(screen, move_log)  # Tekrar log ekranını çiz
             drawStars()  # Yıldızları ekrana çiz
             p.display.flip()
             clock.tick(60)  # 60 FPS
