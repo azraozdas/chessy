@@ -5,6 +5,8 @@ import chessEngine  # chessEngine modülünü doğru bir şekilde içe aktardık
 
 # Oyun Ayarları
 p.init()
+p.mixer.init()
+check_sound = p.mixer.Sound("sounds/tension.MP3")
 
 # Ekran çözünürlüğünü otomatik algıla
 screen_info = p.display.Info()
@@ -251,6 +253,7 @@ def main():
     player_clicks = []
     game_over = False
     return_button = None  # Return to Menu butonunu başlat
+    is_check = False  # Şah durumunu takip etmek için BAŞLANGIÇ DEĞERİ EKLENDİ
 
     while running:
         for event in p.event.get():
@@ -305,10 +308,21 @@ def main():
             valid_moves = game_state.getValidMoves()
             move_made = False
 
+            # Şah durumunu kontrol et
+            if game_state.inCheck():
+                if not is_check:  # Şah durumu yeni başladıysa
+                    check_sound.play()  # Şah sesini çal
+                    is_check = True
+            else:
+                if is_check:  # Şah durumu sona erdiğinde
+                    check_sound.stop()  # Şah sesini durdur
+                    is_check = False
+
         drawGameState(screen, game_state, square_selected)
         return_button = drawMoveLog(screen, game_state.move_log)  # Hamle logunu ve butonu çiz
         p.display.flip()
         clock.tick(MAX_FPS)
+
 
 def drawValidMoves(screen, moves):
     """Taşın geçerli hamlelerini ekrana çizen fonksiyon."""
