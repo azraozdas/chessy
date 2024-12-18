@@ -190,7 +190,8 @@ def mainMenu():
         screen.blit(BACKGROUND_IMAGE, (0, 0))
 
         # Butonları çiz
-        play_button, exit_button = drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit, clicked_exit)
+        play_button, exit_button = drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit,
+                                            clicked_exit)
 
         drawStars()  # Yıldızları ekrana çiz
         p.display.flip()
@@ -215,7 +216,8 @@ def mainMenu():
                                           (screen.get_height() // 2) - (loading_surface.get_height() // 2)))
             p.display.flip()
             p.time.wait(1000)  # Loading ekranında 1 saniye bekle
-            running = False
+
+            main()  # Ana oyunu başlat
 
         # Exit Butonuna Tıklandıysa
         if clicked_exit:
@@ -248,12 +250,9 @@ def main():
     square_selected = ()
     player_clicks = []
     game_over = False
-    return_button = None  # Return butonunu başlat
+    return_button = None  # Return to Menu butonunu başlat
 
     while running:
-        row = -1  # Başlangıç değeri
-        col = -1  # Başlangıç değeri
-
         for event in p.event.get():
             if event.type == p.QUIT:
                 p.quit()
@@ -265,58 +264,42 @@ def main():
                 SQUARE_SIZE = BOARD_WIDTH // DIMENSION
                 screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.RESIZABLE)
                 loadImages()
-            elif event.type == p.MOUSEBUTTONDOWN:
+            elif event.type == p.MOUSEBUTTONDOWN:  # Taş hareketlerini işleme
                 mouse_pos = p.mouse.get_pos()
 
-                if return_button and return_button.collidepoint(mouse_pos):  # Return to Menu butonuna tıklanırsa
-                    mainMenu()  # Ana menüye dön
-                    return  # Bu döngüyü bitir
+                # Eğer Return to Menu butonuna tıklanırsa
+                if return_button and return_button.collidepoint(mouse_pos):
+                    return  # Ana menüye dönmek için döngüyü sonlandır
 
-                location = p.mouse.get_pos()  # Fare tıklama konumunu al
-                col = location[0] // SQUARE_SIZE
-                row = location[1] // SQUARE_SIZE
+                # Kullanıcının tıkladığı satır ve sütunu al
+                col = mouse_pos[0] // SQUARE_SIZE
+                row = mouse_pos[1] // SQUARE_SIZE
 
-            if 0 <= row < DIMENSION and 0 <= col < DIMENSION:
-                if square_selected == (row, col):
-                    square_selected = ()
-                    player_clicks = []
-                else:
-                    square_selected = (row, col)
-                    player_clicks.append(square_selected)
+                if 0 <= row < DIMENSION and 0 <= col < DIMENSION:
+                    if square_selected == (row, col):
+                        square_selected = ()
+                        player_clicks = []
+                    else:
+                        square_selected = (row, col)
+                        player_clicks.append(square_selected)
 
-                if len(player_clicks) == 2:
-                    move = chessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
-                    for i in range(len(valid_moves)):
-                        if move == valid_moves[i]:
-                            animateMove(move, game_state, screen, clock)
-                            game_state.board[move.start_row][move.start_col] = "--"
-
-                            if move.piece_captured != "--":
-                                celebratePiece(move.piece_moved, move.end_row, move.end_col, screen, clock, game_state)
-                            game_state.makeMove(valid_moves[i])
-
-                            if move.getMoveSummary() not in game_state.move_log:
-                                game_state.move_log.append(move.getMoveSummary())
-
-                            move_made = True
-                            square_selected = ()
-                            player_clicks = []
-                            break
-
-                    if not move_made:
-                        player_clicks = [square_selected]
-
-            elif event.type == p.KEYDOWN:
-                if event.key == p.K_z:
-                    game_state.undoMove()
-                    move_made = True
-                elif event.key == p.K_r:
-                    game_state = chessEngine.GameState()
-                    valid_moves = game_state.getValidMoves()
-                    square_selected = ()
-                    player_clicks = []
-                    move_made = False
-                    game_over = False
+                    if len(player_clicks) == 2:
+                        move = chessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
+                        for i in range(len(valid_moves)):
+                            if move == valid_moves[i]:
+                                animateMove(move, game_state, screen, clock)
+                                game_state.board[move.start_row][move.start_col] = "--"
+                                if move.piece_captured != "--":
+                                    celebratePiece(move.piece_moved, move.end_row, move.end_col, screen, clock, game_state)
+                                game_state.makeMove(valid_moves[i])
+                                if move.getMoveSummary() not in game_state.move_log:
+                                    game_state.move_log.append(move.getMoveSummary())
+                                move_made = True
+                                square_selected = ()
+                                player_clicks = []
+                                break
+                        if not move_made:
+                            player_clicks = [square_selected]
 
         if move_made:
             valid_moves = game_state.getValidMoves()
