@@ -186,17 +186,6 @@ def mainMenu():
                 BACKGROUND_IMAGE = p.transform.scale(p.image.load("images/backgroundphoto.png"), (event.w, event.h))
             elif event.type == p.MOUSEBUTTONDOWN:
                 mouse_click = True
-            elif event.type == p.KEYDOWN:
-                global game_state  # Global değişkeni kullanacağımızı belirtiyoruz
-                if event.key == p.K_z:  # Z tuşu ile hamle geri al
-                    game_state.undoMove()
-                    move_made = True
-                    is_check = False  # Şah durumunu sıfırla
-                elif event.key == p.K_r:  # R tuşu ile hamle geri al
-                    if len(game_state.move_log) > 0:  # Eğer hamle logunda hamle varsa
-                        game_state.undoMove()
-                        move_made = True
-                        is_check = False  # Şah durumunu sıfırla
 
         hover_play = play_button and play_button.collidepoint(mouse_pos)
         clicked_play = hover_play and mouse_click
@@ -352,10 +341,6 @@ def main():
                         if not move_made:
                             player_clicks = [square_selected]
 
-            elif event.type == p.KEYDOWN:
-                if event.key == p.K_z:
-                    game_state.undoMove()
-                    move_made = True
                 elif event.key == p.K_r:
                     game_state = chessEngine.GameState()
                     valid_moves = game_state.getValidMoves()
