@@ -1,25 +1,26 @@
 import pygame as p
 import random
 import sys
+
+import os
 import chessEngine  # chessEngine modülünü doğru bir şekilde içe aktardık
 
 # Oyun Ayarları
 p.init()
 p.mixer.init()
-check_channel = p.mixer.Channel(1)
 check_sound = p.mixer.Sound("sounds/tension.MP3")
 move_sound = p.mixer.Sound("sounds/move-pieces.mp3")
 start_game_sound = p.mixer.Sound("sounds/game-start.mp3")
 click_sound = p.mixer.Sound("sounds/click.mp3")
+sound_on = True  # Ses varsayılan olarak açık
 
-# Ekran çözünürlüğünü otomatik algıla
-screen_info = p.display.Info()
-SCREEN_WIDTH = screen_info.current_w
-SCREEN_HEIGHT = screen_info.current_h
+# 🔥 2️⃣ Ekran boyutunu (çözünürlüğü) alın
+SCREEN_WIDTH = p.display.Info().current_w  # Mevcut ekran genişliği
+SCREEN_HEIGHT = p.display.Info().current_h  # Mevcut ekran yüksekliği
 
-# Ekranın %95'ini kaplayacak şekilde tahtayı ayarla
-BOARD_WIDTH = int(SCREEN_WIDTH * 0.95)
-BOARD_HEIGHT = int(SCREEN_HEIGHT * 0.95)
+# Ekranın %100'ini kaplayacak şekilde tahtayı ayarla
+BOARD_WIDTH = int(SCREEN_WIDTH * 1)
+BOARD_HEIGHT = int(SCREEN_HEIGHT * 1)
 
 # Eğer tahtayı kare olarak tutmak isterseniz
 BOARD_WIDTH = min(BOARD_WIDTH, BOARD_HEIGHT)
@@ -32,7 +33,7 @@ SQUARE_SIZE = BOARD_WIDTH // DIMENSION
 MAX_FPS = 120
 
 # Ekranı oluştur
-screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.RESIZABLE)
+screen = p.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), p.FULLSCREEN)
 p.display.set_caption('CHESSY')
 clock = p.time.Clock()
 
@@ -52,6 +53,10 @@ stars = []
 BACKGROUND_IMAGE = p.image.load("images/backgroundphoto.png")
 BACKGROUND_IMAGE = p.transform.scale(BACKGROUND_IMAGE, (BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
 
+def play_sound(sound):
+    """Sesleri kontrol eder. Eğer ses kapalıysa çalmaz."""
+    if sound_on:
+        sound.play()
 
 # Görüntüleri yükle
 def loadImages():
@@ -85,7 +90,32 @@ def drawStars():
             stars.remove(star)
 
 # Ana menüyü çizer
-def drawMenu(play_button, exit_button, hover_play=False, clicked_play=False, hover_exit=False, clicked_exit=False):
+def draw_button(text, font, button_x, button_y, button_width, button_height, hover, clicked):
+    """Buton çizen genel fonksiyon"""
+    if hover:
+        button_width += 20  # Genişlik büyür
+        button_height += 20  # Yükseklik büyür
+    if clicked:
+        button_width -= 10  # Click edildiğinde küçülür
+        button_height -= 10  # Click edildiğinde küçülür
+
+    # 🔥 **Merkezden büyüme efekti**
+    button_x = button_x - ((button_width - 200) // 2)  # X pozisyonunu büyümeye göre ayarla
+    button_y = button_y - ((button_height - 100) // 2)  # Y pozisyonunu büyümeye göre ayarla
+
+    button_rect = p.Rect(button_x, button_y, button_width, button_height)
+    p.draw.rect(screen, (123, 6, 158), button_rect)  # Butonun arka planı
+
+    text_surface = font.render(text, True, (255, 255, 255))
+    text_x = button_x + (button_width // 2) - (text_surface.get_width() // 2)
+    text_y = button_y + (button_height // 2) - (text_surface.get_height() // 2)
+    screen.blit(text_surface, (text_x, text_y))  # Metni butonun ortasına yerleştir
+
+    return button_rect  # Butonun Rect nesnesini döndür
+
+
+def drawMenu(play_button, settings_button, exit_button, hover_play, hover_settings, hover_exit, clicked_play, clicked_settings, clicked_exit):
+    """Ana menüyü çizer"""
     screen.blit(BACKGROUND_IMAGE, (0, 0))
 
     # CHESSY Başlığı
@@ -95,49 +125,26 @@ def drawMenu(play_button, exit_button, hover_play=False, clicked_play=False, hov
     title_y = (screen.get_height() // 6)
     screen.blit(title_surface, (title_x, title_y))
 
-    # Sabit konumlar
-    play_center_x = (screen.get_width() // 2)
-    play_center_y = (screen.get_height() // 2)
-    exit_center_y = play_center_y + 150  # Exit butonu Play butonunun altına sabit yerleştir
-
-    # Play Butonu
+    # **Buton Fontu**
     font = p.font.SysFont("comicsans", 50, True)
-    play_text_surface = font.render('Play', True, (255, 255, 255))
 
+    # 🟢 **Play Butonu**
     play_width, play_height = 200, 100
-    if hover_play:
-        play_width += 20
-        play_height += 20
-    if clicked_play:
-        play_width -= 10
-        play_height -= 10
+    play_x = (screen.get_width() // 2) - (play_width // 2)
+    play_y = (screen.get_height() // 2) - (play_height // 2)
+    play_button = draw_button('Play', font, play_x, play_y, play_width, play_height, hover_play, clicked_play)
 
-    play_x = play_center_x - (play_width // 2)
-    play_y = play_center_y - (play_height // 2)
-    play_button = p.Rect(play_x, play_y, play_width, play_height)
+    # 🟢 **Settings Butonu**
+    settings_width, settings_height = 200, 100
+    settings_x = (screen.get_width() // 2) - (settings_width // 2)
+    settings_y = play_y + 150  # Play butonunun altına ekleyin
+    settings_button = draw_button('Settings', font, settings_x, settings_y, settings_width, settings_height, hover_settings, clicked_settings)
 
-    p.draw.rect(screen, (123, 6, 158), play_button)
-    screen.blit(play_text_surface, (play_center_x - (play_text_surface.get_width() // 2),
-                                    play_center_y - (play_text_surface.get_height() // 2)))
-
-    # Exit Butonu
-    exit_text_surface = font.render('Exit', True, (255, 255, 255))
-
+    # 🟢 **Exit Butonu**
     exit_width, exit_height = 200, 100
-    if hover_exit:
-        exit_width += 20
-        exit_height += 20
-    if clicked_exit:
-        exit_width -= 10
-        exit_height -= 10
-
-    exit_x = play_center_x - (exit_width // 2)
-    exit_y = exit_center_y - (exit_height // 2)
-    exit_button = p.Rect(exit_x, exit_y, exit_width, exit_height)
-
-    p.draw.rect(screen, (123, 6, 158), exit_button)
-    screen.blit(exit_text_surface, (play_center_x - (exit_text_surface.get_width() // 2),
-                                    exit_center_y - (exit_text_surface.get_height() // 2)))
+    exit_x = (screen.get_width() // 2) - (exit_width // 2)
+    exit_y = settings_y + 150  # Settings butonunun altına ekleyin
+    exit_button = draw_button('Exit', font, exit_x, exit_y, exit_width, exit_height, hover_exit, clicked_exit)
 
     # The Creators Bölümü (Sol Tarafta)
     creators_font = p.font.SysFont("comicsans", 15, True)
@@ -159,7 +166,8 @@ def drawMenu(play_button, exit_button, hover_play=False, clicked_play=False, hov
     copyright_y = screen.get_height() - 30  # Ekranın en altından 30 piksel yukarıda
     screen.blit(copyright_surface, (copyright_x, copyright_y))
 
-    return play_button, exit_button
+    # 🔥 **3 buton da geri döndürülüyor**
+    return play_button, settings_button, exit_button
 
 # En üstte global değişkeni tanımlayın
 is_returning_from_game = False  # Return to Menu'den dönüldüğünü kontrol eder
@@ -169,8 +177,16 @@ def mainMenu():
 
     running = True
     play_button = None
+    settings_button = None
     exit_button = None
+
+    hover_play = False
     clicked_play = False
+
+    hover_settings = False
+    clicked_settings = False
+
+    hover_exit = False
     clicked_exit = False
 
     while running:
@@ -182,13 +198,17 @@ def mainMenu():
                 p.quit()
                 sys.exit()
             elif event.type == p.VIDEORESIZE:  # Ekran boyutu değiştirildiğinde
-                screen = p.display.set_mode((event.w, event.h), p.RESIZABLE)
+                screen = p.display.set_mode((event.w, event.h), p.FULLSCREEN)
                 BACKGROUND_IMAGE = p.transform.scale(p.image.load("images/backgroundphoto.png"), (event.w, event.h))
             elif event.type == p.MOUSEBUTTONDOWN:
                 mouse_click = True
 
+        # Buton çizimi ve animasyon kontrolü
         hover_play = play_button and play_button.collidepoint(mouse_pos)
         clicked_play = hover_play and mouse_click
+
+        hover_settings = settings_button and settings_button.collidepoint(mouse_pos)
+        clicked_settings = hover_settings and mouse_click
 
         hover_exit = exit_button and exit_button.collidepoint(mouse_pos)
         clicked_exit = hover_exit and mouse_click
@@ -197,7 +217,17 @@ def mainMenu():
         screen.blit(BACKGROUND_IMAGE, (0, 0))
 
         # Butonları çiz
-        play_button, exit_button = drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit, clicked_exit)
+        play_button, settings_button, exit_button = drawMenu(
+            play_button,
+            settings_button,
+            exit_button,
+            hover_play,
+            hover_settings,
+            hover_exit,
+            clicked_play,
+            clicked_settings,
+            clicked_exit
+        )
 
         # Yıldızları çizerken Return to Menu'den gelindiğini kontrol et
         if not is_returning_from_game:
@@ -206,7 +236,7 @@ def mainMenu():
         p.display.flip()
         clock.tick(60)
 
-        # Play Butonuna Tıklandıysa
+        # 🔥 **Play Butonuna Tıklandıysa**
         if clicked_play:
             is_returning_from_game = False  # Return to Menu'den dönmüyoruz, bu yüzden bayrağı sıfırla
             generateStars(play_button.centerx, play_button.centery)
@@ -214,7 +244,17 @@ def mainMenu():
             start_time = p.time.get_ticks()
             while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye
                 screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı çiz
-                drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit, clicked_exit)
+                drawMenu(
+                    play_button,
+                    settings_button,
+                    exit_button,
+                    hover_play,
+                    hover_settings,
+                    hover_exit,
+                    clicked_play,
+                    clicked_settings,
+                    clicked_exit
+                )
                 drawStars()
                 p.display.flip()
                 clock.tick(60)
@@ -231,16 +271,48 @@ def mainMenu():
             start_game_sound.play()  # 🎉 Oyun başlıyor, sesi çal
             main()
 
-        # Exit Butonuna Tıklandıysa
+        # 🔥 **Settings Butonuna Tıklandıysa**
+        if clicked_settings:
+            click_sound.play()  # 🔊 Click sesi ekleniyor
+            generateStars(settings_button.centerx, settings_button.centery)
+            start_time = p.time.get_ticks()
+            while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye
+                screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı çiz
+                drawMenu(
+                    play_button,
+                    settings_button,
+                    exit_button,
+                    hover_play,
+                    hover_settings,
+                    hover_exit,
+                    clicked_play,
+                    clicked_settings,
+                    clicked_exit
+                )
+                drawStars()
+                p.display.flip()
+                clock.tick(60)
+
+            settingsMenu()  # Ayarlar menüsüne geç
+
+        # 🔥 **Exit Butonuna Tıklandıysa**
         if clicked_exit:
             click_sound.play()  # 🔊 Click sesi ekleniyor
-            generateStars(exit_button.centerx,
-                          exit_button.centery)  # Yıldız animasyonu sadece çıkış butonunun merkezinde olur
+            generateStars(exit_button.centerx, exit_button.centery)  # Yıldız animasyonu çıkış butonunun merkezinde olur
             start_time = p.time.get_ticks()
             while p.time.get_ticks() - start_time < 1000:  # Yıldız animasyonu 1 saniye sürsün
-                screen.fill((0, 0, 0))  # Ekranı temizle (ana menüden bağımsız yıldızlar)
-                drawMenu(play_button, exit_button, hover_play, clicked_play, hover_exit,
-                         clicked_exit)  # Yalnızca menüyü çiz
+                screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı çiz
+                drawMenu(
+                    play_button,
+                    settings_button,
+                    exit_button,
+                    hover_play,
+                    hover_settings,
+                    hover_exit,
+                    clicked_play,
+                    clicked_settings,
+                    clicked_exit
+                )
                 drawStars()  # Yıldızları ekrana çiz
                 p.display.flip()
                 clock.tick(60)
@@ -249,12 +321,123 @@ def mainMenu():
             p.quit()
             sys.exit()
 
+
+def settingsScreen():
+    global is_sfx_on  # Sound kontrolü için global değişkeni al
+    running = True
+
+    while running:
+        mouse_pos = p.mouse.get_pos()
+        mouse_click = False
+
+        for event in p.event.get():
+            if event.type == p.QUIT:
+                p.quit()
+                sys.exit()
+            elif event.type == p.MOUSEBUTTONDOWN:
+                mouse_click = True
+
+        screen.fill((0, 0, 0))  # Arkaplanı siyah yap
+        font = p.font.SysFont("comicsans", 50, True)
+
+        # Sound/SFX Butonu
+        button_text = "Sound/SFX: ON" if is_sfx_on else "Sound/SFX: OFF"
+        button_color = (0, 255, 0) if is_sfx_on else (128, 128, 128)
+        sound_button = p.Rect(100, 200, 300, 100)
+        p.draw.rect(screen, button_color, sound_button)
+        text_surface = font.render(button_text, True, (0, 0, 0))
+        screen.blit(text_surface, (sound_button.centerx - text_surface.get_width() // 2,
+                                   sound_button.centery - text_surface.get_height() // 2))
+
+        if sound_button.collidepoint(mouse_pos) and mouse_click:
+            is_sfx_on = not is_sfx_on  # Ses efektini tersine çevir (ON <-> OFF)
+            if is_sfx_on:
+                click_sound.play()  # Ses açıldığında bir tıklama sesi çal
+
+        p.display.flip()
+        clock.tick(60)
+
+# Settings ekranı arka plan fotoğrafı
+SETTINGS_BACKGROUND = p.image.load("images/settingsphoto.png")
+SETTINGS_BACKGROUND = p.transform.scale(SETTINGS_BACKGROUND, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+# Settings menüsü
+def settingsMenu():
+    """Settings ekranını çizen ve Sound/SFX ayarını kontrol eden fonksiyon."""
+    global sound_on  # Global ses değişkenini kullan
+    running = True
+
+    while running:
+        mouse_pos = p.mouse.get_pos()
+        mouse_click = False
+
+        for event in p.event.get():
+            if event.type == p.QUIT:
+                p.quit()
+                sys.exit()
+            elif event.type == p.MOUSEBUTTONDOWN:
+                mouse_click = True
+
+        # 🔥 Settings arka planını çiz
+        screen.blit(SETTINGS_BACKGROUND, (0, 0))
+
+        # Sound/SFX Butonu
+        sound_text = "Sound/SFX: ON" if sound_on else "Sound/SFX: OFF"
+        sound_color = (0, 255, 0) if sound_on else (128, 128, 128)  # Yeşil açık, gri kapalı
+
+        font_size = 50  # İlk font boyutunu ayarla
+        font = p.font.SysFont("comicsans", font_size, True)
+
+        # Metin boyutunu kontrol et, sığmıyorsa küçült
+        while True:
+            sound_text_surface = font.render(sound_text, True, sound_color)
+            if sound_text_surface.get_width() <= 280:  # Butonun genişliğinden daha küçükse
+                break
+            font_size -= 1  # Font boyutunu küçült
+            font = p.font.SysFont("comicsans", font_size, True)
+
+        # Buton genişliğini ve yüksekliğini metne göre ayarla
+        sound_width = sound_text_surface.get_width() + 40  # 40 piksel boşluk (20 sağ, 20 sol)
+        sound_height = sound_text_surface.get_height() + 20  # 20 piksel boşluk (10 yukarı, 10 aşağı)
+        sound_x = (screen.get_width() // 2) - (sound_width // 2)
+        sound_y = (screen.get_height() // 2) - (sound_height // 2)
+
+        sound_button = p.Rect(sound_x, sound_y, sound_width, sound_height)
+        p.draw.rect(screen, (123, 6, 158), sound_button)
+
+        # Yazıyı butonun tam ortasına yerleştirin
+        text_x = sound_button.x + (sound_button.width // 2) - (sound_text_surface.get_width() // 2)
+        text_y = sound_button.y + (sound_button.height // 2) - (sound_text_surface.get_height() // 2)
+        screen.blit(sound_text_surface, (text_x, text_y))
+
+        # Fare tıklama kontrolü
+        if sound_button.collidepoint(mouse_pos) and mouse_click:
+            sound_on = not sound_on  # Ses durumunu tersine çevir
+
+        # Geri dön butonu
+        return_font = p.font.SysFont("comicsans", 30, True)
+        return_text_surface = return_font.render("Return to Menu", True, (255, 255, 0))
+        return_button = p.Rect(20, 20, 200, 50)
+        p.draw.rect(screen, (123, 6, 158), return_button)
+        screen.blit(return_text_surface, (30, 30))
+
+        # Geri dön kontrolü
+        if return_button.collidepoint(mouse_pos) and mouse_click:
+            return  # Ayarlardan çık ve ana menüye dön
+
+        # Ekranı güncelle
+        p.display.flip()
+        clock.tick(60)
+
 def loadSounds():
     """Ses dosyalarını yükleyen fonksiyon."""
     global move_sound
     p.mixer.init()  # Pygame ses motorunu başlat
     check_sound = p.mixer.Sound("sounds/tension.MP3")  # Ses dosyasını yükle
 
+# En üstte global değişkeni tanımlayın
+is_returning_from_game = False  # Return to Menu'den dönüldüğünü kontrol eder
+is_sfx_on = True  # Ses efekti açık mı kontrolü
 
 def main():
     """Satranç oyununun ana döngüsü."""
@@ -264,7 +447,9 @@ def main():
     loadSounds()  # 🎉 Sesleri yükle
 
     # Başlangıç ekran ayarları
-    screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.RESIZABLE)
+    screen_width = p.display.Info().current_w
+    screen_height = p.display.Info().current_h
+    screen = p.display.set_mode((screen_width, screen_height), p.FULLSCREEN)  # Ekranı tam ekran yap
     p.display.set_caption('CHESSY')  # Pencere başlığı
 
     running = True
@@ -276,6 +461,8 @@ def main():
     game_over = False
     return_button = None  # Return to Menu butonunu başlat
     is_check = False  # Şah durumunu takip etmek için BAŞLANGIÇ DEĞERİ EKLENDİ
+    settings_button = None  # Yeni Settings butonu
+    clicked_settings = False
 
     while running:
         for event in p.event.get():
@@ -287,7 +474,7 @@ def main():
                 new_height = event.h
                 BOARD_WIDTH = BOARD_HEIGHT = min(new_width, new_height)
                 SQUARE_SIZE = BOARD_WIDTH // DIMENSION
-                screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.RESIZABLE)
+                screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.FULLSCREEN)
                 loadImages()
             elif event.type == p.MOUSEBUTTONDOWN:  # Taş hareketlerini işleme
                 mouse_pos = p.mouse.get_pos()
@@ -341,6 +528,10 @@ def main():
                         if not move_made:
                             player_clicks = [square_selected]
 
+            elif event.type == p.KEYDOWN:
+                if event.key == p.K_z:
+                    game_state.undoMove()
+                    move_made = True
                 elif event.key == p.K_r:
                     game_state = chessEngine.GameState()
                     valid_moves = game_state.getValidMoves()
@@ -353,15 +544,14 @@ def main():
             valid_moves = game_state.getValidMoves()
             move_made = False
 
+            # Şah durumunu kontrol et
             if game_state.inCheck():
                 if not is_check:  # Şah durumu yeni başladıysa
-                    check_channel.play(check_sound, loops=-1)  # Şah müziğini başlat
+                    check_sound.play()  # Şah sesini çal
                     is_check = True
-                elif not check_channel.get_busy():  # Eğer müzik bitmişse, tekrar başlat
-                    check_channel.play(check_sound, loops=-1)
             else:
                 if is_check:  # Şah durumu sona erdiğinde
-                    check_channel.stop()  # Şah müziğini durdur
+                    check_sound.stop()  # Şah sesini durdur
                     is_check = False
 
         drawGameState(screen, game_state, square_selected)
@@ -370,40 +560,23 @@ def main():
         clock.tick(MAX_FPS)
 
 
-def drawValidMoves(screen, moves, board):
-    """
-    Taşın geçerli hamlelerini sadece doğru karelere çizen fonksiyon.
-    """
+def drawValidMoves(screen, moves):
+    """Taşın geçerli hamlelerini ekrana çizen fonksiyon."""
     for move in moves:
         row, col = move.end_row, move.end_col
-        piece = board[move.start_row][move.start_col]
-        target_square = board[row][col]
 
-        # Piyon hareketi için kontrol
-        if piece[1] == "p":  # Eğer taş bir piyon ise
-            # Çapraz hareket kontrolü: sadece rakip taş varsa veya en passant hareketi ise
-            if abs(move.start_col - move.end_col) == 1 and move.start_row != move.end_row:
-                if target_square == "--" and not move.is_enpassant_move:
-                    continue  # Eğer çaprazda taş yoksa highlight etme
-            # Düz hareket kontrolü: boş kare olmalı
-            elif move.start_col == move.end_col:
-                if target_square != "--":  # Boş olmayan kareleri geçersiz say
-                    continue
-
-        # Boş kareler için mavi, yenebilecek taşlar için turuncu renk
-        if target_square == "--":
-            color = (110, 203, 245)  # Mavi (boş kare)
+        if move.piece_captured != "--":
+            color = (255, 186, 0)  # Taş yenebiliyorsa bu renk
         else:
-            color = (255, 186, 0)  # Turuncu (rakip taş)
+            color = (110, 203, 245)  # Koyumsu cyan renk
 
-        # Highlight yüzeyi
-        highlight_surface = p.Surface((SQUARE_SIZE, SQUARE_SIZE))
-        highlight_surface.set_alpha(150)
-        highlight_surface.fill(color)
+        # Yeni bir yüzey (Surface) oluştur
+        highlight_surface = p.Surface((SQUARE_SIZE, SQUARE_SIZE))  # Her kare için ayrı bir yüzey
+        highlight_surface.set_alpha(150)  # Şeffaflık: 0 (tam şeffaf) - 255 (tam opak)
+        highlight_surface.fill(color)  # Renk ayarı (ya sarı ya da mor)
 
-        # Kareyi ekrana çiz
+        # Yüzeyi tahtanın doğru konumuna çiz
         screen.blit(highlight_surface, (col * SQUARE_SIZE, row * SQUARE_SIZE))
-
 
 def drawGameState(screen, game_state, square_selected):
     """Tahta ve taşları çizen fonksiyon."""
@@ -416,7 +589,7 @@ def drawGameState(screen, game_state, square_selected):
             piece_color = game_state.board[row][col][0]
             if (piece_color == 'w' and game_state.white_to_move) or (piece_color == 'b' and not game_state.white_to_move):
                 valid_moves = [move for move in game_state.getValidMoves() if move.start_row == row and move.start_col == col]
-                drawValidMoves(screen, valid_moves, game_state.board)  # board parametresi eklendi
+                drawValidMoves(screen, valid_moves)  # Geçerli hamleleri sarıya renklendir
 
 def drawBoard(screen):
     """Tahtanın arkaplanını çizen fonksiyon."""
@@ -567,7 +740,7 @@ def drawMoveLog(screen, move_log):
     max_lines = max_text_height // line_height  # Panelin içine sığabilecek maksimum hamle sayısı
 
     # Son sığabilecek hamleleri göster
-    recent_moves = move_log[-max_lines:]  # Move log'un son kısmını al
+    recent_moves = move_log[-max_lines:]
 
     for i, move in enumerate(recent_moves):  # Son hamleleri göster
         text_surface = font.render(move, True, (255, 255, 0))  # Sarı renk
@@ -576,9 +749,6 @@ def drawMoveLog(screen, move_log):
 
     return return_button  # Return to Menu butonunu döndür
 
-# Ana kodda is_returning_from_game kontrolü
-if not is_returning_from_game:  # Eğer Return to Menu'den gelinmiyorsa çiz
-
-    if __name__ == "__main__":
-        mainMenu()
-        main()
+if __name__ == "__main__":
+    mainMenu()
+    main()
