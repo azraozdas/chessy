@@ -46,13 +46,14 @@ class GameState:
         """
         self.board[move.start_row][move.start_col] = "--"
         self.board[move.end_row][move.end_col] = move.piece_moved
-        self.move_log.append(move.getChessNotation())  # Hamle loguna ekle
+        self.move_log.append(move)  # log the move so we can undo it later
         self.white_to_move = not self.white_to_move  # switch players
         # update king's location if moved
         if move.piece_moved == "wK":
             self.white_king_location = (move.end_row, move.end_col)
         elif move.piece_moved == "bK":
             self.black_king_location = (move.end_row, move.end_col)
+
         # pawn promotion
         if move.is_pawn_promotion:
             # if not is_AI:
@@ -344,33 +345,26 @@ class GameState:
             start_row = 1
             enemy_color = "w"
 
-        # 1 square pawn advance
+        # 1 kare ileri gitme (sadece önünde boş kare varsa)
         if self.board[row + move_amount][col] == "--":
             if not piece_pinned or pin_direction == (move_amount, 0):
                 moves.append(Move((row, col), (row + move_amount, col), self.board))
-                # 2 square pawn advance
-                if row == start_row and self.board[row + 2 * move_amount][col] == "--":
+                # ilk hamlede 2 kare ileri gitme (önündeki iki kare boş olmalı)
+                if row == start_row and self.board[row + 2 * move_amount][col] == "--" and \
+                        self.board[row + move_amount][col] == "--":
                     moves.append(Move((row, col), (row + 2 * move_amount, col), self.board))
 
-        # Capture to the left
-        if col - 1 >= 0:
+        # Çaprazda taş alma (sol)
+        if col - 1 >= 0:  # Sol çapraz
             if not piece_pinned or pin_direction == (move_amount, -1):
-                if self.board[row + move_amount][col - 1][0] == enemy_color:  # Rakip taş varsa
+                if self.board[row + move_amount][col - 1][0] == enemy_color:
                     moves.append(Move((row, col), (row + move_amount, col - 1), self.board))
 
-                # En passant
-                if (row + move_amount, col - 1) == self.enpassant_possible:
-                    moves.append(Move((row, col), (row + move_amount, col - 1), self.board, is_enpassant_move=True))
-
-        # Capture to the right
-        if col + 1 <= 7:
-            if not piece_pinned or pin_direction == (move_amount, +1):
-                if self.board[row + move_amount][col + 1][0] == enemy_color:  # Rakip taş varsa
+        # Çaprazda taş alma (sağ)
+        if col + 1 <= 7:  # Sağ çapraz
+            if not piece_pinned or pin_direction == (move_amount, 1):
+                if self.board[row + move_amount][col + 1][0] == enemy_color:
                     moves.append(Move((row, col), (row + move_amount, col + 1), self.board))
-
-                # En passant
-                if (row + move_amount, col + 1) == self.enpassant_possible:
-                    moves.append(Move((row, col), (row + move_amount, col + 1), self.board, is_enpassant_move=True))
 
     def getRookMoves(self, row, col, moves):
         """
@@ -559,34 +553,6 @@ class Move:
 
         self.is_capture = self.piece_captured != "--"
         self.moveID = self.start_row * 1000 + self.start_col * 100 + self.end_row * 10 + self.end_col
-
-        # Yeni eklenen fonksiyon
-
-    def getMoveSummary(self):
-        """Hamle özetini cümle olarak döner."""
-        piece_names = {'p': 'Pawn', 'R': 'Rook', 'N': 'Knight', 'B': 'Bishop', 'Q': 'Queen', 'K': 'King'}
-
-        # Taşın rengini belirle
-        def getPieceNameWithColor(piece):
-            if piece.startswith('w'):
-                return f"White {piece_names.get(piece[1], 'Unknown')}"
-            elif piece.startswith('b'):
-                return f"Black {piece_names.get(piece[1], 'Unknown')}"
-            return "Unknown Piece"
-
-        start_square = self.getRankFile(self.start_row, self.start_col)
-        end_square = self.getRankFile(self.end_row, self.end_col)
-
-        # Taş adı ve rengi belirleme
-        piece_moved = getPieceNameWithColor(self.piece_moved)
-        summary = f"{piece_moved} moved from {start_square} to {end_square}"
-
-        # Eğer taş yiyorsa
-        if self.piece_captured != "--":
-            piece_captured = getPieceNameWithColor(self.piece_captured)
-            summary += f" and captured {piece_captured}!"
-
-        return summary
 
     def __eq__(self, other):
         """
