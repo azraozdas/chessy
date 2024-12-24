@@ -1,12 +1,8 @@
 
 import pygame as p
-
 import random
-
 import sys
-
 import os
-
 import ChessEngine  # chessEngine modülünü doğru bir şekilde içe aktardık
 
 
