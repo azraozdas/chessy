@@ -1,6 +1,7 @@
-import pygame as p
-import sys
 import random
+import sys
+import ChessStarter
+import pygame as p
 
 p.init()
 p.mixer.init()
@@ -126,6 +127,12 @@ def drawMenu(screen):
             start_game()
             return
 
+        if settings_button and settings_button.collidepoint(mouse_pos) and mouse_click:
+            click_sound.play()
+            from ChessSettings import settingsScreen
+            settingsScreen()
+            return
+
         elif exit_button.collidepoint(mouse_pos) and mouse_click:
             click_sound.play()
             p.quit()
@@ -159,4 +166,4 @@ def mainMenu():
 
 
 if __name__ == "__main__":
-    mainMenu()
+    mainMenu()  # `mainMenu()` işlevi çağrılır.

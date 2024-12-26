@@ -1,8 +1,8 @@
-from ChessMenu import mainMenu
-from ChessMain import main  # Oyunun ana döngüsünü içeren dosya
 
 def start_game():
-    main()  # Oyunu başlatan fonksiyon
+    import ChessMain
+    ChessMain.main()
 
 if __name__ == "__main__":
-    mainMenu()  # Ana menüyü başlat
+    import ChessMenu
+    ChessMenu.mainMenu()
