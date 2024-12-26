@@ -2,7 +2,7 @@ import sys
 
 import pygame as p
 
-from ChessConstants import SCREEN_WIDTH, SCREEN_HEIGHT
+
 
 def settingsScreen():
     global is_sfx_on  # Sound kontrolü için global değişkeni al
