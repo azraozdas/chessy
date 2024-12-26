@@ -4,12 +4,13 @@ Handling user input.
 Displaying current GameStatus object.
 """
 import sys
+
 import pygame as p
+
 import ChessEngine
-from ChessMenu import mainMenu
-from ChessStarter import start_game
 from ChessAnimations import animateMove
-from ChessConstants import screen
+from ChessConstants import start_sound, check_sound, click_sound
+from ChessMenu import mainMenu, generateStars
 
 p.init()
 
@@ -45,6 +46,7 @@ def main():
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.FULLSCREEN)
     clock = p.time.Clock()
+    start_sound.play()
     game_state = ChessEngine.GameState()
     valid_moves = game_state.getValidMoves()
     move_made = False  # flag variable for when a move is made
@@ -54,6 +56,7 @@ def main():
     square_selected = ()  # no square is selected initially, this will keep track of the last click of the user (tuple(row,col))
     player_clicks = []  # this will keep track of player clicks (two tuples)
     game_over = False
+    in_check_prev = False
     ai_thinking = False
     move_undone = False
     move_finder_process = None
@@ -63,12 +66,24 @@ def main():
 
     while running:
         human_turn = (game_state.white_to_move and player_one) or (not game_state.white_to_move and player_two)
+        drawGameState(screen, game_state, valid_moves, square_selected)
+
+        # Return to Menu butonunu oluştur ve tıklanabilir hale getir
+        return_button = drawMoveLog(screen, game_state, move_log_font)
+
         for e in p.event.get():
             if e.type == p.QUIT:
                 p.quit()
                 sys.exit()
                 # mouse handler
             elif e.type == p.MOUSEBUTTONDOWN:
+                mouse_pos = p.mouse.get_pos()
+
+                # Return to Menu butonu tıklama kontrolü
+                if return_button.collidepoint(mouse_pos):
+                    mainMenu()  # Ana menüye dön
+                    return  # Oyun döngüsünden çık
+
                 if e.button == 1:  # Sadece sol tÄ±k (button 1)
                     if not game_over:
                         location = p.mouse.get_pos()  # (x, y) location of the mouse
@@ -126,6 +141,17 @@ def main():
             move_made = False
             animate = False
             move_undone = False
+
+            # Şah durumu kontrolü
+            in_check_now = game_state.inCheck()
+
+            if in_check_now and not in_check_prev:
+                check_sound.play()
+            elif not in_check_now and in_check_prev:
+                check_sound.stop()  # Şah durumu sona erdiğinde ses durur
+
+            # Değişkeni güncelle
+            in_check_prev = in_check_now
 
         drawGameState(screen, game_state, valid_moves, square_selected)
 
@@ -200,32 +226,74 @@ def drawPieces(screen, board):
 
 def drawMoveLog(screen, game_state, font):
     """
-    Draws the move log.
-
+    Draws the move log with multiple columns.
+    If the move log exceeds a certain number of lines, it continues in the next column.
     """
     move_log_rect = p.Rect(BOARD_WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
     p.draw.rect(screen, p.Color("black"), move_log_rect)
     move_log = game_state.move_log
     move_texts = []
-    for i in range(0, len(move_log), 2):
-        move_string = str(i // 2 + 1) + '. ' + str(move_log[i]) + " "
-        if i + 1 < len(move_log):
-            move_string += str(move_log[i + 1]) + "  "
+
+    # Logları satır satır topla
+    for i in range(len(move_log)):
+        move_string = str(i + 1) + ". " + str(move_log[i])
         move_texts.append(move_string)
 
-    moves_per_row = 3
-    padding = 5
-    line_spacing = 2
-    text_y = padding
-    for i in range(0, len(move_texts), moves_per_row):
-        text = ""
-        for j in range(moves_per_row):
-            if i + j < len(move_texts):
-                text += move_texts[i + j]
+    # Izgara yapısı için sınırlar
+    max_lines = (MOVE_LOG_PANEL_HEIGHT - 80) // (font.get_height() + 10)  # Maksimum satır sayısı
+    max_columns = 3  # En fazla kaç sütun olacağı
+    column_width = (MOVE_LOG_PANEL_WIDTH - 40) // max_columns  # Her sütunun genişliği
+    padding = 10
+    line_spacing = font.get_height() + 10
 
-        text_object = font.render(text, True, p.Color('white'))
-        text_location = move_log_rect.move(padding, text_y)
+    # Yazıları ızgara mantığıyla yerleştir
+    for i in range(len(move_texts)):
+        row = i % max_lines  # Satır sayısı
+        col = i // max_lines  # Sütun sayısı (satır limiti aşılırsa yeni sütuna geçer)
+
+        # Eğer sütun sayısı sütun limitini aşarsa, satırın başına döner (overflow önlenir)
+        if col >= max_columns:
+            break
+
+        text_object = font.render(move_texts[i], True, p.Color('white'))
+        text_x = padding + col * column_width  # X pozisyonu (sütuna göre kaydırma)
+        text_y = padding + row * line_spacing  # Y pozisyonu (satıra göre kaydırma)
+
+        text_location = move_log_rect.move(text_x, text_y)
         screen.blit(text_object, text_location)
+
+    # Return to Menu Butonu
+    button_width = MOVE_LOG_PANEL_WIDTH - 40
+    button_height = 50
+    button_x = BOARD_WIDTH + 20
+    button_y = MOVE_LOG_PANEL_HEIGHT - 55
+
+    return_button = p.Rect(button_x, button_y, button_width, button_height)
+    mouse_pos = p.mouse.get_pos()
+
+    button_color = (123, 6, 158)  # Mor
+    border_color = (255, 102, 242)  # Pembe
+    text_color = (255, 255, 255)  # Beyaz
+
+    # Return to Menu butonu hover ve tıklama efekti
+    if return_button.collidepoint(mouse_pos):
+        button_color = (153, 51, 204)  # Hover rengi
+        if p.mouse.get_pressed()[0]:  # Tıklama kontrolü
+            button_color = (90, 3, 120)
+            click_sound.play()  # Tıklama sesi çal
+            generateStars(button_x + button_width // 2, button_y + button_height // 2)
+
+    # Butonu Çiz
+    p.draw.rect(screen, button_color, return_button)
+    p.draw.rect(screen, border_color, return_button, 3)
+
+    button_font = p.font.SysFont("Arial", 28, True)
+    button_text = button_font.render("Return to Menu", True, text_color)
+    screen.blit(button_text, (button_x + (button_width // 2 - button_text.get_width() // 2),
+                              button_y + (button_height // 2 - button_text.get_height() // 2)))
+
+    return return_button
+
 
 def drawEndGameText(screen, text):
     font = p.font.SysFont("Helvetica", 32, True, False)

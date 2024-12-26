@@ -3,6 +3,7 @@ Storing all the information about the current state of chess game.
 Determining valid moves at current state.
 It will keep move log.
 """
+import ChessConstants as cc
 
 
 class GameState:
@@ -39,11 +40,15 @@ class GameState:
         self.castle_rights_log = [CastleRights(self.current_castling_rights.wks, self.current_castling_rights.bks,
                                                self.current_castling_rights.wqs, self.current_castling_rights.bqs)]
 
+
     def makeMove(self, move):
         """
         Takes a Move as a parameter and executes it.
         (this will not work for castling, pawn promotion and en-passant)
         """
+
+        cc.move_sound.play()
+
         self.board[move.start_row][move.start_col] = "--"
         self.board[move.end_row][move.end_col] = move.piece_moved
         self.move_log.append(move)  # log the move so we can undo it later
@@ -505,14 +510,18 @@ class GameState:
             self.getQueensideCastleMoves(row, col, moves)
 
     def getKingsideCastleMoves(self, row, col, moves):
-        if self.board[row][col + 1] == '--' and self.board[row][col + 2] == '--':
+        if self.board[row][col + 1] == '--' and self.board[row][
+            col + 2] == '--':  # Kale ve şah arasındaki kareler boş olmalı
             if not self.squareUnderAttack(row, col + 1) and not self.squareUnderAttack(row, col + 2):
-                moves.append(Move((row, col), (row, col + 2), self.board, is_castle_move=True))
+                moves.append(
+                    Move((row, col), (row, col + 2), self.board, is_castle_move=True))  # Şah 2 kare hareket eder
 
     def getQueensideCastleMoves(self, row, col, moves):
-        if self.board[row][col - 1] == '--' and self.board[row][col - 2] == '--' and self.board[row][col - 3] == '--':
+        if self.board[row][col - 1] == '--' and self.board[row][col - 2] == '--' and self.board[row][
+            col - 3] == '--':  # Kale ve şah arasındaki kareler boş olmalı
             if not self.squareUnderAttack(row, col - 1) and not self.squareUnderAttack(row, col - 2):
-                moves.append(Move((row, col), (row, col - 2), self.board, is_castle_move=True))
+                moves.append(
+                    Move((row, col), (row, col - 2), self.board, is_castle_move=True))  # Şah 2 kare hareket eder
 
 
 class CastleRights:

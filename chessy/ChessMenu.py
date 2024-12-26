@@ -1,5 +1,6 @@
 import random
 import sys
+
 import ChessStarter
 import pygame as p
 
@@ -43,12 +44,16 @@ def drawStars(screen):
 
 
 def draw_button(text, font, x, y, width, height, hover, clicked, screen):
+    scale_factor = SCREEN_HEIGHT / 1080  # Referans yüksekliği 1080 olarak alıyoruz
+    width = int(width * scale_factor)
+    height = int(height * scale_factor)
+
     if hover:
-        width += 20
-        height += 20
+        width += int(20 * scale_factor)
+        height += int(20 * scale_factor)
     if clicked:
-        width -= 10
-        height -= 10
+        width -= int(10 * scale_factor)
+        height -= int(10 * scale_factor)
 
     rect = p.Rect(x - width // 2, y - height // 2, width, height)
     p.draw.rect(screen, (123, 6, 158), rect)
@@ -56,16 +61,19 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
     screen.blit(text_surface, (rect.centerx - text_surface.get_width() // 2, rect.centery - text_surface.get_height() // 2))
     return rect
 
-
-
 def drawMenu(screen):
     global BACKGROUND_IMAGE
     running = True
-    font = p.font.SysFont("comicsans", 50, True)
-    title_font = p.font.SysFont("comicsans", 180, True)
-    creators_font = p.font.SysFont("comicsans", 20, True)
-    copyright_font = p.font.SysFont("arial", 20)  # Telif yazısı için font
+    scale_factor = SCREEN_HEIGHT / 1080  # Referans yüksekliği 1080 olarak alıyoruz
 
+    font = p.font.SysFont("comicsans", int(50 * scale_factor), True)
+    title_font = p.font.SysFont("comicsans", int(180 * scale_factor), True)
+    creators_font = p.font.SysFont("comicsans", int(20 * scale_factor), True)
+    copyright_font = p.font.SysFont("arial", int(20 * scale_factor))  # Telif yazısı için font
+
+    # Oyun durumu yükleme
+
+    # Butonlar
     play_button = None
     settings_button = None
     exit_button = None
@@ -81,20 +89,24 @@ def drawMenu(screen):
         mouse_pos = p.mouse.get_pos()
 
         # Butonları çiz
-        play_button = draw_button('Play', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50, 200, 100, play_button and play_button.collidepoint(mouse_pos), False, screen)
-        settings_button = draw_button('Settings', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70, 200, 100, settings_button and settings_button.collidepoint(mouse_pos), False, screen)
-        exit_button = draw_button('Exit', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 190, 200, 100, exit_button and exit_button.collidepoint(mouse_pos), False, screen)
+        play_button = draw_button('Play', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - int(50 * scale_factor),
+                                  200, 100, play_button and play_button.collidepoint(mouse_pos), False, screen)
+        settings_button = draw_button('Settings', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + int(70 * scale_factor),
+                                       200, 100, settings_button and settings_button.collidepoint(mouse_pos), False, screen)
+        exit_button = draw_button('Exit', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + int(190 * scale_factor),
+                                  200, 100, exit_button and exit_button.collidepoint(mouse_pos), False, screen)
+
 
         # The Creators Bölümü
         creators_title = creators_font.render("The creators of Chessy:", True, (255, 255, 0))
-        screen.blit(creators_title, (20, 20))
+        screen.blit(creators_title, (int(20 * scale_factor), int(20 * scale_factor)))
 
         names = ["Müslüm Selim Aksahin", "Azra Özdas", "Dilay Tarhan"]
-        y_offset = 60
+        y_offset = int(60 * scale_factor)
         for name in names:
             name_surface = creators_font.render(f"- {name}", True, (255, 255, 0))
-            screen.blit(name_surface, (40, y_offset))
-            y_offset += 30
+            screen.blit(name_surface, (int(40 * scale_factor), y_offset))
+            y_offset += int(30 * scale_factor)
 
         # Telif Hakkı (Copyright) Metni
         copyright_surface = copyright_font.render(
@@ -103,7 +115,7 @@ def drawMenu(screen):
             (200, 200, 200)
         )
         copyright_x = (SCREEN_WIDTH // 2) - (copyright_surface.get_width() // 2)
-        copyright_y = SCREEN_HEIGHT - 5  # Ekranın altından 30 piksel yukarı
+        copyright_y = SCREEN_HEIGHT - int(30 * scale_factor)
         screen.blit(copyright_surface, (copyright_x, copyright_y))
 
         p.display.flip()
@@ -133,7 +145,7 @@ def drawMenu(screen):
             settingsScreen()
             return
 
-        elif exit_button.collidepoint(mouse_pos) and mouse_click:
+        if exit_button.collidepoint(mouse_pos) and mouse_click:
             click_sound.play()
             p.quit()
             sys.exit()
@@ -161,6 +173,7 @@ def startButtonAnimation(screen, button):
 
 
 def mainMenu():
+
     screen = p.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), p.FULLSCREEN)
     drawMenu(screen)
 
