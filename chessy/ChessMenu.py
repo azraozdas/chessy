@@ -1,8 +1,10 @@
 import random
 import sys
-
 import ChessStarter
 import pygame as p
+
+from ChessConstants import resize_and_center_background
+
 
 p.init()
 p.mixer.init()
@@ -16,9 +18,17 @@ SCREEN_HEIGHT = p.display.Info().current_h
 stars = []
 sound_on = True
 
-BACKGROUND_IMAGE = p.image.load("images/backgroundphoto5.jpg")
-BACKGROUND_IMAGE = p.transform.scale(BACKGROUND_IMAGE, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
+overlay = p.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), p.SRCALPHA)
+overlay.fill((0, 0, 0, 180))  # Şeffaf siyah
+
+
+
+BACKGROUND_IMAGE = p.image.load("images/backgroundphoto5.jpg")
+BACKGROUND_IMAGE = resize_and_center_background(BACKGROUND_IMAGE, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+overlay = p.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), p.SRCALPHA)
+overlay.fill((0, 0, 0, 180))  # Şeffaf siyah overlay
 
 def generateStars(x, y, count=30):
     for _ in range(count):
@@ -42,38 +52,17 @@ def drawStars(screen):
         if star['life'] <= 0:
             stars.remove(star)
 
-
-def draw_button(text, font, x, y, width, height, hover, clicked, screen):
-    scale_factor = SCREEN_HEIGHT / 1080  # Referans yüksekliği 1080 olarak alıyoruz
-    width = int(width * scale_factor)
-    height = int(height * scale_factor)
-
-    if hover:
-        width += int(20 * scale_factor)
-        height += int(20 * scale_factor)
-    if clicked:
-        width -= int(10 * scale_factor)
-        height -= int(10 * scale_factor)
-
-    rect = p.Rect(x - width // 2, y - height // 2, width, height)
-    p.draw.rect(screen, (123, 6, 158), rect)
-    text_surface = font.render(text, True, (255, 255, 255))
-    screen.blit(text_surface, (rect.centerx - text_surface.get_width() // 2, rect.centery - text_surface.get_height() // 2))
-    return rect
-
 def drawMenu(screen):
     global BACKGROUND_IMAGE
     running = True
-    scale_factor = SCREEN_HEIGHT / 1080  # Referans yüksekliği 1080 olarak alıyoruz
+    submenu_open = False  # Alt menü başlangıçta kapalı
+    scale_factor = SCREEN_HEIGHT / 1080
 
     font = p.font.SysFont("comicsans", int(50 * scale_factor), True)
     title_font = p.font.SysFont("comicsans", int(180 * scale_factor), True)
     creators_font = p.font.SysFont("comicsans", int(20 * scale_factor), True)
     copyright_font = p.font.SysFont("arial", int(20 * scale_factor))  # Telif yazısı için font
 
-    # Oyun durumu yükleme
-
-    # Butonlar
     play_button = None
     settings_button = None
     exit_button = None
@@ -82,20 +71,9 @@ def drawMenu(screen):
         screen.blit(BACKGROUND_IMAGE, (0, 0))
         drawStars(screen)
 
-        # CHESSY Başlık
+        # Başlık metni
         title_surface = title_font.render('CHESSY', True, (255, 255, 255))
         screen.blit(title_surface, (SCREEN_WIDTH // 2 - title_surface.get_width() // 2, SCREEN_HEIGHT // 10))
-
-        mouse_pos = p.mouse.get_pos()
-
-        # Butonları çiz
-        play_button = draw_button('Play', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - int(50 * scale_factor),
-                                  200, 100, play_button and play_button.collidepoint(mouse_pos), False, screen)
-        settings_button = draw_button('Settings', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + int(70 * scale_factor),
-                                       200, 100, settings_button and settings_button.collidepoint(mouse_pos), False, screen)
-        exit_button = draw_button('Exit', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + int(190 * scale_factor),
-                                  200, 100, exit_button and exit_button.collidepoint(mouse_pos), False, screen)
-
 
         # The Creators Bölümü
         creators_title = creators_font.render("The creators of Chessy:", True, (255, 255, 0))
@@ -118,39 +96,83 @@ def drawMenu(screen):
         copyright_y = SCREEN_HEIGHT - int(30 * scale_factor)
         screen.blit(copyright_surface, (copyright_x, copyright_y))
 
-        p.display.flip()
-
+        mouse_pos = p.mouse.get_pos()
         mouse_click = False
 
         for event in p.event.get():
             if event.type == p.QUIT:
                 p.quit()
                 sys.exit()
-            elif event.type == p.VIDEORESIZE:
-                screen = p.display.set_mode((event.w, event.h), p.FULLSCREEN)
-                BACKGROUND_IMAGE = p.transform.scale(p.image.load("images/backgroundphoto5.jpg"), (event.w, event.h))
             elif event.type == p.MOUSEBUTTONDOWN:
                 mouse_click = True
 
-        # Buton tıklamalarını kontrol et
-        if play_button.collidepoint(mouse_pos) and mouse_click:
-            startButtonAnimation(screen, play_button)  # Loading animasyonu
-            from ChessMain import main  # Oyun ekranını içe aktar
-            main()  # Oyun ekranını başlat
-            return
+        # Alt menü açık değilse, ana butonları çiz
+        if not submenu_open:
+            play_button = draw_button('Play', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50,
+                                      300, 100, play_button and play_button.collidepoint(mouse_pos), False, screen)
+            settings_button = draw_button('Settings', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 80,
+                                          300, 100, settings_button and settings_button.collidepoint(mouse_pos), False, screen)
+            exit_button = draw_button('Exit', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 210,
+                                      300, 100, exit_button and exit_button.collidepoint(mouse_pos), False, screen)
 
+            # "Play" butonuna tıklandığında alt menüyü aç
+            if play_button.collidepoint(mouse_pos) and mouse_click:
+                submenu_open = True  # Alt menü açılır
+
+        # Alt menü butonları
+        if submenu_open:
+            screen.blit(overlay, (0, 0))  # Şeffaf arkaplanı overlay olarak ekle
+
+            play_with_computer = draw_button("Play with Computer", font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 70,
+                                             400, 100, False, False, screen)
+            play_with_friend = draw_button("Play with Friend", font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70,
+                                           400, 100, False, False, screen)
+
+            # "Play with Friend" butonuna basıldığında oyunu başlat
+            if play_with_friend.collidepoint(mouse_pos) and mouse_click:
+                startButtonAnimation(screen, play_button)
+
+                # Döngüsel importu önlemek için burada import yapılıyor
+                from ChessMain import main
+                main()  # Satranç tahtasını başlat
+                running = False  # Menü döngüsünden çık
+
+        p.display.flip()
+
+        # Ayarlar butonu
         if settings_button and settings_button.collidepoint(mouse_pos) and mouse_click:
-            click_sound.play()
+            startButtonAnimation(screen, settings_button, skip_loading=True)
             from ChessSettings import settingsScreen
             settingsScreen()
             return
 
-        if exit_button.collidepoint(mouse_pos) and mouse_click:
-            click_sound.play()
+        # Çıkış butonu
+        if exit_button and exit_button.collidepoint(mouse_pos) and mouse_click:
+            startButtonAnimation(screen, exit_button, skip_loading=True)
             p.quit()
             sys.exit()
 
-def startButtonAnimation(screen, button):
+def draw_button(text, font, x, y, width, height, hover, clicked, screen):
+    scale_factor = SCREEN_HEIGHT / 1080  # Referans yüksekliği 1080 olarak alıyoruz
+    width = int(width * scale_factor)
+    height = int(height * scale_factor)
+
+    if hover:
+        width += int(20 * scale_factor)
+        height += int(20 * scale_factor)
+    if clicked:
+        width -= int(10 * scale_factor)
+        height -= int(10 * scale_factor)
+
+    rect = p.Rect(x - width // 2, y - height // 2, width, height)
+    p.draw.rect(screen, (123, 6, 158), rect)
+    text_surface = font.render(text, True, (255, 255, 255))
+    screen.blit(text_surface, (rect.centerx - text_surface.get_width() // 2, rect.centery - text_surface.get_height() // 2))
+    return rect
+
+
+
+def startButtonAnimation(screen, button, skip_loading=False):
     click_sound.play()
     generateStars(button.centerx, button.centery)
     start_time = p.time.get_ticks()
@@ -161,16 +183,15 @@ def startButtonAnimation(screen, button):
         p.display.flip()
         p.time.Clock().tick(60)
 
-    # Yükleme ekranı
-    screen.fill((0, 0, 0))
-    loading_font = p.font.SysFont("comicsans", 60, True)
-    loading_surface = loading_font.render("Loading...", True, (255, 255, 255))
-    screen.blit(loading_surface, ((SCREEN_WIDTH // 2) - (loading_surface.get_width() // 2),
-                                  (SCREEN_HEIGHT // 2) - (loading_surface.get_height() // 2)))
-    p.display.flip()
-    p.time.wait(1000)
-
-
+    # Yükleme ekranı sadece skip_loading False olduğunda gösterilir
+    if not skip_loading:
+        screen.fill((0, 0, 0))
+        loading_font = p.font.SysFont("comicsans", 60, True)
+        loading_surface = loading_font.render("Loading...", True, (255, 255, 255))
+        screen.blit(loading_surface, ((SCREEN_WIDTH // 2) - (loading_surface.get_width() // 2),
+                                      (SCREEN_HEIGHT // 2) - (loading_surface.get_height() // 2)))
+        p.display.flip()
+        p.time.wait(1000)
 
 def mainMenu():
 

@@ -1,11 +1,17 @@
 import subprocess
-import ChessMenu  # Ana menü için
+import sys
+import ChessMenu
 
 def start_game():
-    # ChessStartScreen.py dosyasını çalıştır (Tanıtım Ekranı)
-    subprocess.run(["python3", "ChessStartScreen.py"])  # Sisteminizde `python3` yerine gerekirse `python` yazın
+    try:
+        # sys.executable kullanarak doğru Python yorumlayıcısını belirle
+        subprocess.run([sys.executable, "ChessStartScreen.py"], check=True)
+    except FileNotFoundError:
+        print("ChessStartScreen.py bulunamadı.")
+    except subprocess.CalledProcessError as e:
+        print(f"ChessStartScreen.py çalıştırılırken bir hata oluştu: {e}")
 
-    # Tanıtım ekranı tamamlandıktan sonra Ana Menü'yü başlat
+    # Ana Menü'yü başlat
     ChessMenu.mainMenu()
 
 if __name__ == "__main__":
