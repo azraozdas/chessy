@@ -3,6 +3,7 @@ Storing all the information about the current state of chess game.
 Determining valid moves at current state.
 It will keep move log.
 """
+
 import ChessConstants as cc
 from chessy.ChessAnimations import joyEffect
 from chessy.ChessMain import SQUARE_SIZE
@@ -46,6 +47,7 @@ class GameState:
         """
         Execute the move. If additional parameters are provided, animate and trigger effects.
         """
+
         if screen and SQUARE_SIZE and clock and IMAGES and drawBoard and drawPieces:
             # Taş hareketi animasyonu
             from ChessAnimations import animateMove  # Animasyon fonksiyonunu içe aktar
@@ -624,4 +626,4 @@ class Move:
         if self.is_capture:
             move_string += "x"
         return move_string + end_square
-#
+##

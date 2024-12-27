@@ -89,4 +89,4 @@ def settingsScreen():
         # Ekranı Güncelle
         p.display.flip()
         clock.tick(60)
-#
+##

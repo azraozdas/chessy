@@ -2,12 +2,13 @@ import random
 import sys
 
 import pygame as p
+from chessy.ChessConstants import start_sound
 
 p.init()
 p.mixer.init()
 
 click_sound = p.mixer.Sound("sounds/click.mp3")
-start_game_sound = p.mixer.Sound("sounds/game-start.mp3")
+start_game_sound = p.mixer.Sound("sounds/piece-select.mp3")
 
 SCREEN_WIDTH = p.display.Info().current_w
 SCREEN_HEIGHT = p.display.Info().current_h
@@ -38,6 +39,21 @@ def generateStars(x, y, count=30):
             'life': random.randint(40, 100)
         })
 
+def fade_in(screen, background, duration=2000):
+    fade_surface = p.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    fade_surface.fill((0, 0, 0))
+    clock = p.time.Clock()
+    alpha = 255
+    start_time = p.time.get_ticks()
+
+    while alpha > 0:
+        elapsed_time = p.time.get_ticks() - start_time
+        alpha = max(255 - (elapsed_time / duration) * 255, 0)
+        fade_surface.set_alpha(alpha)
+        screen.blit(background, (0, 0))
+        screen.blit(fade_surface, (0, 0))
+        p.display.flip()
+        clock.tick(60)
 
 def drawStars(screen):
     for star in stars:
@@ -49,6 +65,13 @@ def drawStars(screen):
         if star['life'] <= 0:
             stars.remove(star)
 
+def play_menu_music():
+    p.mixer.music.load("sounds/menuchessysong.mp3")
+    p.mixer.music.play(-1)  # Sonsuz döngüde çalar
+
+def stop_menu_music():
+    p.mixer.music.stop()
+
 def drawMenu(screen):
     global BACKGROUND_IMAGE
     running = True
@@ -59,6 +82,12 @@ def drawMenu(screen):
     title_font = p.font.SysFont("comicsans", int(180 * scale_factor), True)
     creators_font = p.font.SysFont("comicsans", int(20 * scale_factor), True)
     copyright_font = p.font.SysFont("arial", int(20 * scale_factor))  # Telif yazısı için font
+
+    button_width = 300
+    button_height = 100
+    vertical_spacing = int(50 * scale_factor)  # Butonlar arasındaki boşluk
+    center_x = SCREEN_WIDTH // 2
+    start_y = SCREEN_HEIGHT // 2 - ((button_height + vertical_spacing) * 0.5)  # İlk butonun başlangıç pozisyonu
 
     play_button = None
     settings_button = None
@@ -105,12 +134,9 @@ def drawMenu(screen):
 
         # Alt menü açık değilse, ana butonları çiz
         if not submenu_open:
-            play_button = draw_button('Play', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50,
-                                      300, 100, play_button and play_button.collidepoint(mouse_pos), False, screen)
-            settings_button = draw_button('Settings', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 80,
-                                          300, 100, settings_button and settings_button.collidepoint(mouse_pos), False, screen)
-            exit_button = draw_button('Exit', font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 210,
-                                      300, 100, exit_button and exit_button.collidepoint(mouse_pos), False, screen)
+            play_button = draw_button('Play', font, center_x, start_y, button_width, button_height, play_button and play_button.collidepoint(mouse_pos), mouse_click, screen)
+            settings_button = draw_button('Settings', font, center_x, start_y + button_height + vertical_spacing, button_width, button_height, settings_button and settings_button.collidepoint(mouse_pos), mouse_click, screen)
+            exit_button = draw_button('Exit', font, center_x, start_y + 2 * (button_height + vertical_spacing), button_width, button_height, exit_button and exit_button.collidepoint(mouse_pos), mouse_click, screen)
 
             # "Play" butonuna tıklandığında alt menüyü aç
             if play_button.collidepoint(mouse_pos) and mouse_click:
@@ -120,14 +146,15 @@ def drawMenu(screen):
         if submenu_open:
             screen.blit(overlay, (0, 0))  # Şeffaf arkaplanı overlay olarak ekle
 
-            play_with_computer = draw_button("Play with Computer", font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 70,
+            play_with_computer = draw_button("Play with Computer", font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 100,
                                              400, 100, False, False, screen)
-            play_with_friend = draw_button("Play with Friend", font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 70,
+            play_with_friend = draw_button("Play with Friend", font, SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100,
                                            400, 100, False, False, screen)
 
             # "Play with Friend" butonuna basıldığında oyunu başlat
             if play_with_friend.collidepoint(mouse_pos) and mouse_click:
                 startButtonAnimation(screen, play_button)
+                stop_menu_music()  # Oyun başladığında müziği durdur
 
                 # Döngüsel importu önlemek için burada import yapılıyor
                 from ChessMain import main
@@ -149,8 +176,12 @@ def drawMenu(screen):
             p.quit()
             sys.exit()
 
+
 def draw_button(text, font, x, y, width, height, hover, clicked, screen):
-    scale_factor = SCREEN_HEIGHT / 1080  # Referans yüksekliği 1080 olarak alıyoruz
+    """
+    Draw an elliptical button that scales dynamically with the screen size.
+    """
+    scale_factor = SCREEN_HEIGHT / 1080  # Adjust button size relative to a base resolution
     width = int(width * scale_factor)
     height = int(height * scale_factor)
 
@@ -162,11 +193,14 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
         height -= int(10 * scale_factor)
 
     rect = p.Rect(x - width // 2, y - height // 2, width, height)
-    p.draw.rect(screen, (123, 6, 158), rect)
+    ellipse_surface = p.Surface((width, height), p.SRCALPHA)  # Use SRCALPHA for transparency
+    p.draw.ellipse(ellipse_surface, (123, 6, 158), (0, 0, width, height))
+    screen.blit(ellipse_surface, (x - width // 2, y - height // 2))
+
+    # Render text
     text_surface = font.render(text, True, (255, 255, 255))
     screen.blit(text_surface, (rect.centerx - text_surface.get_width() // 2, rect.centery - text_surface.get_height() // 2))
     return rect
-
 
 
 def startButtonAnimation(screen, button, skip_loading=False):
@@ -190,12 +224,23 @@ def startButtonAnimation(screen, button, skip_loading=False):
         p.display.flip()
         p.time.wait(1000)
 
-def mainMenu():
-
+def mainMenu(first_time=False):
     screen = p.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), p.FULLSCREEN)
+
+    # Oyun müziğini durdur
+    p.mixer.music.stop()
+
+    if first_time:
+        fade_in(screen, BACKGROUND_IMAGE)  # İlk açılışta fade-in efekti ekle
+        play_menu_music()  # İlk açılışta müziği başlat
+    else:
+        if not p.mixer.music.get_busy():  # Müzik çalmıyorsa başlat
+            play_menu_music()
+
     drawMenu(screen)
 
-
 if __name__ == "__main__":
-    mainMenu()  # `mainMenu()` işlevi çağrılır.
-#
+    mainMenu(first_time=True)  # Oyun ilk açıldığında fade-in efekti ve müzik olsun
+
+
+##

@@ -1,18 +1,12 @@
-"""
-Main driver file.
-Handling user input.
-Displaying current GameStatus object.
-"""
 import sys
-
 import pygame as p
-
 import ChessEngine
 from ChessAnimations import animateMove
-from ChessConstants import start_sound, check_sound, click_sound
+from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound
 from ChessMenu import mainMenu, generateStars
 
 p.init()
+p.mixer.init()
 
 SCREEN_WIDTH = p.display.Info().current_w
 SCREEN_HEIGHT = p.display.Info().current_h
@@ -23,102 +17,101 @@ MOVE_LOG_PANEL_WIDTH = SCREEN_WIDTH - BOARD_WIDTH
 MOVE_LOG_PANEL_HEIGHT = SCREEN_HEIGHT
 DIMENSION = 8
 SQUARE_SIZE = BOARD_HEIGHT // DIMENSION
-MAX_FPS = 120
+MAX_FPS = 144
 
 IMAGES = {}
 
-
 def loadImages():
-    """
-    Initialize a global directory of images.
-    This will be called exactly once in the main.
-    """
     pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (SQUARE_SIZE, SQUARE_SIZE))
 
-
 def main():
-    """
-    The main driver for our code.
-    This will handle user input and updating the graphics.
-    """
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.FULLSCREEN)
     clock = p.time.Clock()
     start_sound.play()
+
+    # Müzik dosyasını yükleyin ve ses seviyesini ayarlayın
+    p.mixer.music.load("sounds/chessgamesong.mp3")
+    p.mixer.music.set_volume(0.1)  # Ses seviyesini 0.1 olarak ayarlayın (0.0 ile 1.0 arasında)
+    p.mixer.music.play(-1)  # Müzik döngüde çalsın
+
     game_state = ChessEngine.GameState()
     valid_moves = game_state.getValidMoves()
-    move_made = False  # flag variable for when a move is made
-    animate = False  # flag variable for when we should animate a move
-    loadImages()  # do this only once before while loop
+    move_made = False
+    animate = False
+    loadImages()
     running = True
-    square_selected = ()  # no square is selected initially, this will keep track of the last click of the user (tuple(row,col))
-    player_clicks = []  # this will keep track of player clicks (two tuples)
+    square_selected = ()
+    player_clicks = []
     game_over = False
     in_check_prev = False
     ai_thinking = False
     move_undone = False
     move_finder_process = None
     move_log_font = p.font.SysFont("Arial", 14, False, False)
-    player_one = True  # if a human is playing white, then this will be True, else False
-    player_two = True  # if a human is playing black, then this will be True, else False
+    mouse_pos = p.mouse.get_pos()
+    mouse_click = False
+    player_one = True
+    player_two = True
 
     while running:
         human_turn = (game_state.white_to_move and player_one) or (not game_state.white_to_move and player_two)
         drawGameState(screen, game_state, valid_moves, square_selected)
-
-        # Return to Menu butonunu oluştur ve tıklanabilir hale getir
         return_button = drawMoveLog(screen, game_state, move_log_font)
 
         for e in p.event.get():
             if e.type == p.QUIT:
                 p.quit()
                 sys.exit()
-                # mouse handler
             elif e.type == p.MOUSEBUTTONDOWN:
                 mouse_pos = p.mouse.get_pos()
-
-                # Return to Menu butonu tıklama kontrolü
                 if return_button.collidepoint(mouse_pos):
-                    mainMenu()  # Ana menüye dön
-                    return  # Oyun döngüsünden çık
-
-                if e.button == 1:  # Sadece sol tÄ±k (button 1)
+                    if e.type == p.MOUSEBUTTONDOWN and e.button == 1:
+                        check_sound.stop()
+                        mainMenu()
+                        return
+                if e.button == 1:
+                    location = p.mouse.get_pos()
+                    col = location[0] // SQUARE_SIZE
+                    row = location[1] // SQUARE_SIZE
+                    if 0 <= row < 8 and 0 <= col < 8:
+                        piece = game_state.board[row][col]
+                        if piece != "--":
+                            if (game_state.white_to_move and piece[0] == 'w') or (not game_state.white_to_move and piece[0] == 'b'):
+                                if piece_select_sound:
+                                    piece_select_sound.play()
                     if not game_over:
-                        location = p.mouse.get_pos()  # (x, y) location of the mouse
+                        location = p.mouse.get_pos()
                         col = location[0] // SQUARE_SIZE
                         row = location[1] // SQUARE_SIZE
-                        if square_selected == (row, col) or col >= 8:  # user clicked the same square twice
-                            square_selected = ()  # deselect
-                            player_clicks = []  # clear clicks
+                        if square_selected == (row, col) or col >= 8:
+                            square_selected = ()
+                            player_clicks = []
                         else:
                             square_selected = (row, col)
-                            player_clicks.append(square_selected)  # append for both 1st and 2nd click
-                        if len(player_clicks) == 2 and human_turn:  # after 2nd click
+                            player_clicks.append(square_selected)
+                        if len(player_clicks) == 2 and human_turn:
                             move = ChessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
                             for i in range(len(valid_moves)):
                                 if move == valid_moves[i]:
-                                    # Önce animasyonu çalıştır
                                     animateMove(valid_moves[i], screen, game_state.board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces)
-                                    # Daha sonra hamleyi tahtada uygula
                                     game_state.makeMove(valid_moves[i])
                                     move_made = True
-                                    square_selected = ()  # Seçimi sıfırla
+                                    square_selected = ()
                                     player_clicks = []
                                     break
                             if not move_made:
                                 player_clicks = [square_selected]
-
-            # key handler
             elif e.type == p.KEYDOWN:
-                if e.key == p.K_z:  # undo when 'z' is pressed
+                if e.key == p.K_z:
                     game_state.undoMove()
                     move_made = True
                     animate = False
                     game_over = False
                     move_undone = True
-                if e.key == p.K_r:  # reset the game when 'r' is pressed
+                if e.key == p.K_r:
                     game_state = ChessEngine.GameState()
                     valid_moves = game_state.getValidMoves()
                     square_selected = ()
@@ -130,50 +123,36 @@ def main():
 
         if move_made:
             if animate:
-                animateMove(
-                    game_state.move_log[-1],  # Hareket
-                    screen,  # Ekran nesnesi
-                    game_state.board,  # Tahta durumu
-                    clock,  # Saat nesnesi
-                    IMAGES,  # Taş görselleri
-                    SQUARE_SIZE,  # Kare boyutu
-                    drawBoard,  # Tahtayı çizmek için fonksiyon
-                    drawPieces  # Taşları çizmek için fonksiyon
-                )
+                animateMove(game_state.move_log[-1], screen, game_state.board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces)
             valid_moves = game_state.getValidMoves()
             move_made = False
             animate = False
             move_undone = False
-
-            # Şah durumu kontrolü
             in_check_now = game_state.inCheck()
-
             if in_check_now and not in_check_prev:
+                p.mixer.music.pause()  # Oyun müziğini duraklat
                 check_sound.play()
             elif not in_check_now and in_check_prev:
-                check_sound.stop()  # Şah durumu sona erdiğinde ses durur
-
-            # Değişkeni güncelle
+                check_sound.stop()
+                p.mixer.music.unpause()  # Oyun müziğini devam ettir
             in_check_prev = in_check_now
 
         drawGameState(screen, game_state, valid_moves, square_selected)
-
         if not game_over:
             drawMoveLog(screen, game_state, move_log_font)
-
         if game_state.checkmate:
             game_over = True
             if game_state.white_to_move:
                 drawEndGameText(screen, "Black wins by checkmate")
             else:
                 drawEndGameText(screen, "White wins by checkmate")
-
         elif game_state.stalemate:
             game_over = True
             drawEndGameText(screen, "Stalemate")
 
         clock.tick(MAX_FPS)
         p.display.flip()
+
 
 def drawGameState(screen, game_state, valid_moves, square_selected):
     """
@@ -199,22 +178,47 @@ def drawBoard(screen):
 def highlightSquares(screen, game_state, valid_moves, square_selected):
     """
     Highlight square selected and moves for piece selected.
+    If a piece can capture, highlight its square with orange and its valid moves with light blue.
+    The selected square's border is always drawn on top of pieces.
     """
+    # Çerçevenin kare dışına taşmasını sağlayan dikdörtgen
+    outer_border_rect = None
+
     if square_selected != ():
         row, col = square_selected
         if game_state.board[row][col][0] == (
                 'w' if game_state.white_to_move else 'b'):  # square_selected is a piece that can be moved
-            # highlight selected square
+            # Initialize surfaces for highlighting
             s = p.Surface((SQUARE_SIZE, SQUARE_SIZE))
-            s.set_alpha(100)  # transparency value 0 -> transparent, 255 -> opaque
-            s.fill(p.Color('blue'))
-            screen.blit(s, (col * SQUARE_SIZE, row * SQUARE_SIZE))
-            # highlight moves from that square
-            s.fill(p.Color('yellow'))
+            capture_highlight = False  # Flag to check if this piece can capture
+
+            # Check if the selected piece can capture any opponent piece
+            for move in valid_moves:
+                if move.start_row == row and move.start_col == col and move.piece_captured != "--":
+                    capture_highlight = True
+                    break
+
+            # Çerçevenin kare dışına taşmasını sağlayan dikdörtgen koordinatlarını oluştur
+            outer_border_rect = p.Rect(
+                (col * SQUARE_SIZE) - 3,  # Slightly offset for the outer border
+                (row * SQUARE_SIZE) - 3,
+                SQUARE_SIZE + 6,  # Make the border extend outside
+                SQUARE_SIZE + 6
+            )
+
+            # Highlight valid moves from the selected square
             for move in valid_moves:
                 if move.start_row == row and move.start_col == col:
+                    if move.piece_captured != "--":
+                        s.fill((255, 186, 0))  # Orange for capture squares
+                    else:
+                        s.fill((110, 203, 245))  # Light blue for normal move squares
+                    s.set_alpha(100)
                     screen.blit(s, (move.end_col * SQUARE_SIZE, move.end_row * SQUARE_SIZE))
 
+    # Çerçeveyi taşların üstünde göstermek için buraya koyuyoruz
+    if outer_border_rect:
+        p.draw.rect(screen, (255, 255, 255, 150), outer_border_rect, width=3)  # Transparent white border
 
 def drawPieces(screen, board):
     """
@@ -312,4 +316,4 @@ def drawEndGameText(screen, text):
 
 if __name__ == "__main__":
     mainMenu()
-#
+##
