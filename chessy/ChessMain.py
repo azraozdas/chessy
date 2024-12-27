@@ -31,12 +31,13 @@ def main():
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.FULLSCREEN)
     clock = p.time.Clock()
-    start_sound.play()
+    if ChessGlobals.is_sfx_on:
+        start_sound.play()
 
     # Müzik dosyasını yükleyin ve ses seviyesini ayarlayın
     if ChessGlobals.is_sfx_on:
         p.mixer.music.load("sounds/chessgamesong.mp3")
-        p.mixer.music.set_volume(0.1)  # Ses seviyesini 0.1 olarak ayarlayın (0.0 ile 1.0 arasında)
+        p.mixer.music.set_volume(0.2)  # Ses seviyesini 0.1 olarak ayarlayın (0.0 ile 1.0 arasında)
         p.mixer.music.play(-1)  # Müzik döngüde çalsın
 
     game_state = ChessEngine.GameState()
@@ -83,7 +84,8 @@ def main():
                         if piece != "--":
                             if (game_state.white_to_move and piece[0] == 'w') or (not game_state.white_to_move and piece[0] == 'b'):
                                 if piece_select_sound:
-                                    piece_select_sound.play()
+                                    if ChessGlobals.is_sfx_on:
+                                        piece_select_sound.play()
                     if not game_over:
                         location = p.mouse.get_pos()
                         col = location[0] // SQUARE_SIZE
@@ -133,7 +135,8 @@ def main():
             in_check_now = game_state.inCheck()
             if in_check_now and not in_check_prev:
                 p.mixer.music.pause()  # Oyun müziğini duraklat
-                check_sound.play()
+                if ChessGlobals.is_sfx_on:
+                    check_sound.play()
             elif not in_check_now and in_check_prev:
                 check_sound.stop()
                 p.mixer.music.unpause()  # Oyun müziğini devam ettir
@@ -290,7 +293,8 @@ def drawMoveLog(screen, game_state, font):
         button_color = (153, 51, 204)  # Hover rengi
         if p.mouse.get_pressed()[0]:  # Tıklama kontrolü
             button_color = (90, 3, 120)
-            click_sound.play()  # Tıklama sesi çal
+            if ChessGlobals.is_sfx_on:
+                click_sound.play()  # Tıklama sesi çal
             generateStars(button_x + button_width // 2, button_y + button_height // 2)
 
     # Butonu Çiz
@@ -318,4 +322,4 @@ def drawEndGameText(screen, text):
 
 if __name__ == "__main__":
     mainMenu()
-##
+###

@@ -1,7 +1,9 @@
 import random
 import pygame as p
 import ChessMenu
+from chessy import ChessGlobals
 from chessy.ChessConstants import move_sound, captured_sound
+
 
 stars = []
 
@@ -14,7 +16,8 @@ def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, draw
 
     # Hareket başlangıcında ses efekti çal (eğer başka bir ses çalmıyorsa)
     if move_sound and not p.mixer.get_busy():
-        move_sound.play()
+        if ChessGlobals.is_sfx_on:
+            move_sound.play()
 
     # Başlangıç karesini tahtada hemen temizle
     board[move.start_row][move.start_col] = "--"
@@ -46,8 +49,9 @@ def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, draw
     # Eğer taş yakalanıyorsa, capture yapan taş için büyüyüp küçülme efekti uygula
     if move.piece_captured != "--":
         if captured_sound:
-            captured_sound.play()
-        growAndShrinkEffect(screen, move.piece_moved, move.end_row, move.end_col, SQUARE_SIZE, IMAGES)
+            if ChessGlobals.is_sfx_on:
+                captured_sound.play()
+            growAndShrinkEffect(screen, move.piece_moved, move.end_row, move.end_col, SQUARE_SIZE, IMAGES)
 
 
 def drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES):
@@ -185,4 +189,4 @@ if __name__ == "__main__":
     from ChessMain import main
     main()
 
-##
+###

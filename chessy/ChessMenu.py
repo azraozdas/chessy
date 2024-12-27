@@ -1,6 +1,5 @@
 import random
 import sys
-
 import pygame as p
 
 from chessy import ChessGlobals
@@ -8,8 +7,9 @@ from chessy import ChessGlobals
 p.init()
 p.mixer.init()
 
-click_sound = p.mixer.Sound("sounds/click.mp3")
-start_game_sound = p.mixer.Sound("sounds/piece-select.mp3")
+if ChessGlobals.is_sfx_on:
+    click_sound = p.mixer.Sound("sounds/click.mp3")
+    start_game_sound = p.mixer.Sound("sounds/piece-select.mp3")
 
 SCREEN_WIDTH = p.display.Info().current_w
 SCREEN_HEIGHT = p.display.Info().current_h
@@ -206,7 +206,8 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
 
 
 def startButtonAnimation(screen, button, skip_loading=False):
-    click_sound.play()
+    if ChessGlobals.is_sfx_on:
+        click_sound.play()
     generateStars(button.centerx, button.centery)
     start_time = p.time.get_ticks()
 
@@ -245,4 +246,4 @@ if __name__ == "__main__":
     mainMenu(first_time=True)  # Oyun ilk açıldığında fade-in efekti ve müzik olsun
 
 
-##
+###
