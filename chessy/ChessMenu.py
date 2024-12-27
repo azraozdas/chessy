@@ -1,10 +1,7 @@
 import random
 import sys
-import ChessStarter
+
 import pygame as p
-
-from ChessConstants import resize_and_center_background
-
 
 p.init()
 p.mixer.init()
@@ -24,8 +21,8 @@ overlay.fill((0, 0, 0, 180))  # Şeffaf siyah
 
 
 
-BACKGROUND_IMAGE = p.image.load("images/backgroundphoto5.jpg")
-BACKGROUND_IMAGE = resize_and_center_background(BACKGROUND_IMAGE, SCREEN_WIDTH, SCREEN_HEIGHT)
+BACKGROUND_IMAGE = p.image.load("images/backgroundphoto.png")
+BACKGROUND_IMAGE = p.transform.scale(BACKGROUND_IMAGE, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 overlay = p.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), p.SRCALPHA)
 overlay.fill((0, 0, 0, 180))  # Şeffaf siyah overlay
@@ -201,3 +198,4 @@ def mainMenu():
 
 if __name__ == "__main__":
     mainMenu()  # `mainMenu()` işlevi çağrılır.
+#

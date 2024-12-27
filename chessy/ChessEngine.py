@@ -624,3 +624,4 @@ class Move:
         if self.is_capture:
             move_string += "x"
         return move_string + end_square
+#
