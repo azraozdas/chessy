@@ -1,5 +1,7 @@
 import pygame as p
 
+from chessy import ChessGlobals
+
 p.init()
 p.mixer.init()
 
@@ -19,8 +21,9 @@ captured_sound = p.mixer.Sound("sounds/captured-sound.mp3")
 piece_select_sound = p.mixer.Sound("sounds/piece-select.mp3")
 
 #Menü müziği
-p.mixer.music.load("sounds/menuchessysong.mp3")
-p.mixer.music.play(-1)  # Sonsuz döngüde çalar
+if ChessGlobals.is_sfx_on:
+    p.mixer.music.load("sounds/menuchessysong.mp3")
+    p.mixer.music.play(-1)  # Sonsuz döngüde çalar
 
 
 #Saat

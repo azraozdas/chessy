@@ -2,7 +2,8 @@ import random
 import sys
 
 import pygame as p
-from chessy.ChessConstants import start_sound
+
+from chessy import ChessGlobals
 
 p.init()
 p.mixer.init()
@@ -66,8 +67,9 @@ def drawStars(screen):
             stars.remove(star)
 
 def play_menu_music():
-    p.mixer.music.load("sounds/menuchessysong.mp3")
-    p.mixer.music.play(-1)  # Sonsuz döngüde çalar
+    if ChessGlobals.is_sfx_on:
+        p.mixer.music.load("sounds/menuchessysong.mp3")
+        p.mixer.music.play(-1)  # Sonsuz döngüde çalar
 
 def stop_menu_music():
     p.mixer.music.stop()
@@ -232,7 +234,7 @@ def mainMenu(first_time=False):
 
     if first_time:
         fade_in(screen, BACKGROUND_IMAGE)  # İlk açılışta fade-in efekti ekle
-        play_menu_music()  # İlk açılışta müziği başlat
+        if ChessGlobals.is_sfx_on: play_menu_music()  # İlk açılışta müziği başlat
     else:
         if not p.mixer.music.get_busy():  # Müzik çalmıyorsa başlat
             play_menu_music()

@@ -4,6 +4,7 @@ import ChessEngine
 from ChessAnimations import animateMove
 from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound
 from ChessMenu import mainMenu, generateStars
+from chessy import ChessGlobals
 
 p.init()
 p.mixer.init()
@@ -33,9 +34,10 @@ def main():
     start_sound.play()
 
     # Müzik dosyasını yükleyin ve ses seviyesini ayarlayın
-    p.mixer.music.load("sounds/chessgamesong.mp3")
-    p.mixer.music.set_volume(0.1)  # Ses seviyesini 0.1 olarak ayarlayın (0.0 ile 1.0 arasında)
-    p.mixer.music.play(-1)  # Müzik döngüde çalsın
+    if ChessGlobals.is_sfx_on:
+        p.mixer.music.load("sounds/chessgamesong.mp3")
+        p.mixer.music.set_volume(0.1)  # Ses seviyesini 0.1 olarak ayarlayın (0.0 ile 1.0 arasında)
+        p.mixer.music.play(-1)  # Müzik döngüde çalsın
 
     game_state = ChessEngine.GameState()
     valid_moves = game_state.getValidMoves()

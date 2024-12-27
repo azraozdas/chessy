@@ -1,11 +1,9 @@
 import sys
 import pygame as p
 from ChessConstants import screen, click_sound, clock
+from chessy import ChessGlobals
 
 p.init()
-
-# SFX Durumu İçin Global Değişken
-is_sfx_on = True  # Varsayılan olarak ses efektleri açık
 
 # Arka Plan Yükleme
 SETTINGS_BACKGROUND = p.image.load("images/settingsphoto2.jpg")
@@ -18,7 +16,6 @@ def resize_background():
 
 
 def settingsScreen():
-    global is_sfx_on  # Sound kontrolü için global değişkeni al
     running = True
 
     # İlk Başlangıçta Arka Planı Ekran Boyutuna Göre Ayarla
@@ -42,8 +39,8 @@ def settingsScreen():
         screen.blit(SETTINGS_BACKGROUND, (0, 0))
 
         # Sound/SFX Butonu Ortalanması
-        button_text = "Sound/SFX: ON" if is_sfx_on else "Sound/SFX: OFF"
-        button_color = (0, 255, 0) if is_sfx_on else (128, 128, 128)
+        button_text = "Sound/SFX: ON" if ChessGlobals.is_sfx_on else "Sound/SFX: OFF"
+        button_color = (0, 255, 0) if ChessGlobals.is_sfx_on else (128, 128, 128)
 
         # Butonu Dinamik Olarak Ortala
         sound_button = p.Rect(0, 0, 300, 100)
@@ -66,9 +63,20 @@ def settingsScreen():
 
         # Butona Tıklama Kontrolü
         if sound_button.collidepoint(mouse_pos) and mouse_click:
-            is_sfx_on = not is_sfx_on  # Ses efektini tersine çevir (ON <-> OFF)
-            if is_sfx_on:
-                click_sound.play()  # Ses açıldığında bir tıklama sesi çal
+            #ChessGlobals.is_sfx_on = not ChessGlobals.is_sfx_on  # Ses efektini tersine çevir (ON <-> OFF)
+            #if ChessGlobals.is_sfx_on:
+            #    click_sound.play()  # Ses açıldığında bir tıklama sesi çal
+            # ---
+            ChessGlobals.is_sfx_on = not ChessGlobals.is_sfx_on
+            if ChessGlobals.is_sfx_on:
+                click_sound.play()  # Ses açıldığında tık sesi çal
+                # Arkaplan müziğini yeniden başlatmak istersen:
+                p.mixer.music.load("sounds/menuchessysong.mp3")
+                p.mixer.music.play(-1)
+            else:
+                # Tüm sesleri durdur
+                p.mixer.music.stop()
+                p.mixer.stop()
 
         # Geri Dön Butonu
         return_font = p.font.SysFont("comicsans", 30, True)
