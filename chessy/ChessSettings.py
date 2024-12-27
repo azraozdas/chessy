@@ -8,7 +8,7 @@ p.init()
 is_sfx_on = True  # Varsayılan olarak ses efektleri açık
 
 # Arka Plan Yükleme
-SETTINGS_BACKGROUND = p.image.load("images/settingsphoto.png")
+SETTINGS_BACKGROUND = p.image.load("images/settingsphoto2.jpg")
 
 
 def resize_background():

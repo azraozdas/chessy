@@ -16,7 +16,7 @@ SCREEN_HEIGHT = p.display.Info().current_h
 stars = []
 sound_on = True
 
-BACKGROUND_IMAGE = p.image.load("images/backgroundphoto.png")
+BACKGROUND_IMAGE = p.image.load("images/backgroundphoto5.jpg")
 BACKGROUND_IMAGE = p.transform.scale(BACKGROUND_IMAGE, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 
@@ -128,15 +128,15 @@ def drawMenu(screen):
                 sys.exit()
             elif event.type == p.VIDEORESIZE:
                 screen = p.display.set_mode((event.w, event.h), p.FULLSCREEN)
-                BACKGROUND_IMAGE = p.transform.scale(p.image.load("images/backgroundphoto.png"), (event.w, event.h))
+                BACKGROUND_IMAGE = p.transform.scale(p.image.load("images/backgroundphoto5.jpg"), (event.w, event.h))
             elif event.type == p.MOUSEBUTTONDOWN:
                 mouse_click = True
 
         # Buton tıklamalarını kontrol et
         if play_button.collidepoint(mouse_pos) and mouse_click:
-            startButtonAnimation(screen, play_button)
-            from ChessStarter import start_game
-            start_game()
+            startButtonAnimation(screen, play_button)  # Loading animasyonu
+            from ChessMain import main  # Oyun ekranını içe aktar
+            main()  # Oyun ekranını başlat
             return
 
         if settings_button and settings_button.collidepoint(mouse_pos) and mouse_click:

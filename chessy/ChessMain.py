@@ -99,11 +99,14 @@ def main():
                             move = ChessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
                             for i in range(len(valid_moves)):
                                 if move == valid_moves[i]:
+                                    # Önce animasyonu çalıştır
+                                    animateMove(valid_moves[i], screen, game_state.board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces)
+                                    # Daha sonra hamleyi tahtada uygula
                                     game_state.makeMove(valid_moves[i])
                                     move_made = True
-                                    animate = True
-                                    square_selected = ()  # reset user clicks
+                                    square_selected = ()  # Seçimi sıfırla
                                     player_clicks = []
+                                    break
                             if not move_made:
                                 player_clicks = [square_selected]
 
@@ -184,13 +187,13 @@ def drawGameState(screen, game_state, valid_moves, square_selected):
 def drawBoard(screen):
     """
     Draw the squares on the board.
-    The top left square is always light.
     """
     colors = [p.Color(255, 102, 242), p.Color(123, 6, 158)]
-    for row in range(DIMENSION):
-        for column in range(DIMENSION):
-            color = colors[((row + column) % 2)]
-            p.draw.rect(screen, color, p.Rect(column * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+    for row in range(8):
+        for col in range(8):
+            color = colors[(row + col) % 2]
+            rect = p.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+            p.draw.rect(screen, color, rect)
 
 
 def highlightSquares(screen, game_state, valid_moves, square_selected):
@@ -215,13 +218,14 @@ def highlightSquares(screen, game_state, valid_moves, square_selected):
 
 def drawPieces(screen, board):
     """
-    Draw the pieces on the board using the current game_state.board
+    Draw the pieces on the board using the current board state.
     """
-    for row in range(DIMENSION):
-        for column in range(DIMENSION):
-            piece = board[row][column]
-            if piece != "--":
-                screen.blit(IMAGES[piece], p.Rect(column * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+    for row in range(8):
+        for col in range(8):
+            piece = board[row][col]
+            if piece != "--":  # Eğer kare boş değilse taşı çiz
+                piece_rect = p.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+                screen.blit(IMAGES[piece], piece_rect)
 
 
 def drawMoveLog(screen, game_state, font):
