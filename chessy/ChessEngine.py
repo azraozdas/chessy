@@ -63,12 +63,12 @@ class GameState:
             self.black_king_location = (move.end_row, move.end_col)
 
         # pawn promotion
-        if move.is_pawn_promotion:
+        #if move.is_pawn_promotion:
             # if not is_AI:
             #    promoted_piece = input("Promote to Q, R, B, or N:") #take this to UI later
             #    self.board[move.end_row][move.end_col] = move.piece_moved[0] + promoted_piece
             # else:
-            self.board[move.end_row][move.end_col] = move.piece_moved[0] + "Q"
+            #self.board[move.end_row][move.end_col] = move.piece_moved[0] + "Q"
 
         # enpassant move
         if move.is_enpassant_move:
@@ -618,4 +618,4 @@ class Move:
         if self.is_capture:
             move_string += "x"
         return move_string + end_square
-####
+#####

@@ -340,4 +340,4 @@ def mainMenu(first_time=False):
 
     drawMenu(screen)
 
-#
+##
