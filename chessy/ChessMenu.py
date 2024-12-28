@@ -150,6 +150,7 @@ def drawMenu(screen):
     """
     Ana menüyü çizer. 'Play' butonuna basılınca alt menü (Play with Computer / Play with Friend) açılır.
     'Settings' ve 'Exit' butonları da bu menüde yer alır.
+    Alt menüde ayrıca 'Return to Menu' butonu da olsun.
     """
     global BACKGROUND_IMAGE
     running = True
@@ -176,6 +177,7 @@ def drawMenu(screen):
     # Alt menü buton referansları
     play_with_computer = None
     play_with_friend = None
+    return_submenu_button = None  # <-- Yeni buton (Return to Menu)
 
     while running:
         screen.blit(BACKGROUND_IMAGE, (0, 0))
@@ -255,7 +257,7 @@ def drawMenu(screen):
                 screen
             )
 
-            # Play butonuna tıklanınca alt menüye geç
+            # Play butonuna tıklanınca alt menüyü aç
             if play_button and play_button.collidepoint(mouse_pos) and mouse_click:
                 submenu_open = True
 
@@ -272,32 +274,46 @@ def drawMenu(screen):
                 p.quit()
                 sys.exit()
 
-        # ---------------- ALT MENÜ KISMI ----------------
+            # ---------------- ALT MENÜ KISMI ----------------
         else:
             # Şeffaf arkaplan
             screen.blit(overlay, (0, 0))
 
-            hovered_computer_button = (play_with_computer is not None and
-                                       play_with_computer.collidepoint(mouse_pos))
-            hovered_friend_button = (play_with_friend is not None and
-                                     play_with_friend.collidepoint(mouse_pos))
+            hovered_computer_button = (play_with_computer is not None and play_with_computer.collidepoint(mouse_pos))
+            hovered_friend_button = (play_with_friend is not None and play_with_friend.collidepoint(mouse_pos))
+            hovered_return_button = (
+                        return_submenu_button is not None and return_submenu_button.collidepoint(mouse_pos))
 
-            # "Play with Computer" butonu
+            # Dikey konumları daha uzaklaştırmak için offseti büyütelim
+            # Örn. 200 piksel arayla yerleştirelim
+            offset = int(200 * scale_factor)
+
+            # "Play with Computer" butonu (daha yukarı)
             play_with_computer = draw_button(
                 "Play with Computer", font,
-                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - int(100 * scale_factor),
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - offset,
                 550, 120,
                 hovered_computer_button,
                 mouse_click,
                 screen
             )
 
-            # "Play with Friend" butonu
+            # "Play with Friend" butonu (orta)
             play_with_friend = draw_button(
                 "Play with Friend", font,
-                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + int(100 * scale_factor),
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
                 550, 120,
                 hovered_friend_button,
+                mouse_click,
+                screen
+            )
+
+            # "Return to Menu" butonu (daha aşağı)
+            return_submenu_button = draw_button(
+                "Return to Menu", font,
+                SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + offset,
+                550, 120,
+                hovered_return_button,
                 mouse_click,
                 screen
             )
@@ -307,7 +323,7 @@ def drawMenu(screen):
                 startButtonAnimation(screen, play_with_computer)
                 stop_menu_music()
                 from ChessMain import main
-                main(player_one=True, player_two=False)  # Beyaz insan, Siyah bilgisayar
+                main(player_one=True, player_two=False)  # Beyaz insan, siyah bilgisayar
                 running = False
 
             # "Play with Friend" tıklandı
@@ -318,9 +334,14 @@ def drawMenu(screen):
                 main()  # İki taraf da insan
                 running = False
 
+            # "Return to Menu" tıklandı
+            if return_submenu_button and return_submenu_button.collidepoint(mouse_pos) and mouse_click:
+                # Alt menüyü kapat, ana menüye dön
+                submenu_open = False
+
         p.display.flip()  # Ekranı güncelle
 
-    # while running döngüsünün sonu (menü kapandığında)
+    # while running döngüsünün sonu
 
 
 def mainMenu(first_time=False):
