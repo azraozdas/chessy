@@ -46,12 +46,14 @@ def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, draw
     # Tahtanın yeni durumunu güncelle
     board[move.end_row][move.end_col] = move.piece_moved
 
-    # Eğer taş yakalanıyorsa, capture yapan taş için büyüyüp küçülme efekti uygula
     if move.piece_captured != "--":
-        if captured_sound:
-            if ChessGlobals.is_sfx_on:
-                captured_sound.play()
-            growAndShrinkEffect(screen, move.piece_moved, move.end_row, move.end_col, SQUARE_SIZE, IMAGES)
+        # 1) Sesi çal
+        if captured_sound and ChessGlobals.is_sfx_on:
+            captured_sound.set_volume(1.0)  # isterseniz
+            captured_sound.play()
+
+        # 2) Efekti yap
+        growAndShrinkEffect(screen, move.piece_moved, move.end_row, move.end_col, SQUARE_SIZE, IMAGES)
 
 
 def drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES):
@@ -189,4 +191,4 @@ if __name__ == "__main__":
     from ChessMain import main
     main()
 
-###
+####

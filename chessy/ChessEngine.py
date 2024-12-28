@@ -43,15 +43,11 @@ class GameState:
         self.castle_rights_log = [CastleRights(self.current_castling_rights.wks, self.current_castling_rights.bks,
                                                self.current_castling_rights.wqs, self.current_castling_rights.bqs)]
 
+
     def makeMove(self, move, screen=None, SQUARE_SIZE=None, clock=None, IMAGES=None, drawBoard=None, drawPieces=None):
         """
         Execute the move. If additional parameters are provided, animate and trigger effects.
         """
-
-        if screen and SQUARE_SIZE and clock and IMAGES and drawBoard and drawPieces:
-            # Taş hareketi animasyonu
-            from ChessAnimations import animateMove  # Animasyon fonksiyonunu içe aktar
-            animateMove(move, screen, self.board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces)
 
         # Taşı tahtadan kaldır ve yeni pozisyona koy
         self.board[move.start_row][move.start_col] = "--"
@@ -59,10 +55,6 @@ class GameState:
         self.move_log.append(move)  # Hamle kaydını güncelle
         self.white_to_move = not self.white_to_move  # Sıra değişimi
 
-        # Yakalanan taş varsa efekt ekle
-        if move.piece_captured != "--" and screen and SQUARE_SIZE:
-            from ChessAnimations import joyEffect  # Efekt fonksiyonunu içe aktar
-            joyEffect(screen, move.end_row, move.end_col, SQUARE_SIZE)
 
         # update king's location if moved
         if move.piece_moved == "wK":
@@ -626,4 +618,4 @@ class Move:
         if self.is_capture:
             move_string += "x"
         return move_string + end_square
-###
+####
