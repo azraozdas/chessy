@@ -1,12 +1,14 @@
-import sys
-import pygame as p
 import random  # AI piyon terfisi için rastgele seçimde kullanacağız
+import sys
+
+import pygame as p
+
 import ChessAI
+import ChessEngine
 from ChessAnimations import animateMove
-from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound, captured_sound, move_sound
+from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound, move_sound
 from ChessMenu import mainMenu, generateStars
 from chessy import ChessGlobals
-import ChessEngine
 
 p.init()
 p.mixer.init()

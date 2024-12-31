@@ -3,4 +3,4 @@
 # SFX Durumu İçin Global Değişken
 is_sfx_on = True  # Varsayılan olarak ses efektleri açık
 
-####
+#####
