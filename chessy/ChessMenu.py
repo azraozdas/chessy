@@ -26,6 +26,11 @@ BACKGROUND_IMAGE = p.transform.scale(BACKGROUND_IMAGE, (SCREEN_WIDTH, SCREEN_HEI
 overlay = p.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), p.SRCALPHA)
 overlay.fill((0, 0, 0, 180))  # Şeffaf siyah overlay
 
+neon_circles = [
+    {'x': SCREEN_WIDTH // 4, 'y': SCREEN_HEIGHT // 3, 'radius': 150, 'color': (255, 0, 255)},
+    {'x': SCREEN_WIDTH // 2, 'y': SCREEN_HEIGHT // 2, 'radius': 200, 'color': (0, 255, 255)},
+]
+
 def generateStars(x, y, count=30):
     """Ekrana rastgele yıldızlar ekler."""
     for _ in range(count):
@@ -355,14 +360,55 @@ def mainMenu(first_time=False):
     drawMenu(screen)
 
 # ========================== YENİ EKLEMELER ==========================
+def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, margin=20):
+    def wrap_text(text, font, max_width):
+        words = text.split(' ')
+        wrapped_lines = []
+        current_line = ''
 
+        for word in words:
+            test_line = f"{current_line} {word}".strip()
+            if font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                wrapped_lines.append(current_line)
+                current_line = word
+        wrapped_lines.append(current_line)
+        return wrapped_lines
+
+    # Metni kutunun genişliğine göre satırlara ayır
+    wrapped_title_lines = wrap_text(title, big_font, box_rect.width - margin * 2)
+
+    max_text_width = box_rect.width - margin * 2
+    wrapped_lines = wrap_lines(lines, small_font, max_text_width)
+
+    line_spacing = small_font.get_height() + 5
+    total_height = (
+            len(wrapped_title_lines) * (big_font.get_height() + 5) +
+            (len(wrapped_lines) * line_spacing) + margin * 2
+    )
+    box_rect.height = max(total_height, 100)
+
+    # Kutuyu çiz
+    p.draw.rect(surface, (123, 6, 158), box_rect, border_radius=15)
+
+    # Başlığı çok satırlı olarak yazdır
+    current_y = box_rect.y + margin
+    for title_line in wrapped_title_lines:
+        title_surf = big_font.render(title_line, True, (255, 255, 255))
+        surface.blit(title_surf, (box_rect.x + margin, current_y))
+        current_y += big_font.get_height() + 5
+
+    # İçerik satırlarını yazdır
+    current_y += 10  # Başlık ve içerik arasına boşluk bırak
+    for w_line in wrapped_lines:
+        line_surf = small_font.render(w_line, True, (255, 255, 255))
+        surface.blit(line_surf, (box_rect.x + margin, current_y))
+        current_y += line_spacing
+
+
+# Metni kutu içine sığdıran yardımcı fonksiyon
 def wrap_lines(lines, font, max_width):
-    """
-    Satırları 'max_width' içine sığacak şekilde kelime kelime böler.
-    lines: Orijinal satır listesi
-    font:  Yazıyı çizmekte kullandığımız font
-    max_width: kutu içinde izin verdiğimiz max piksel genişlik
-    """
     wrapped = []
     for line in lines:
         words = line.split()
@@ -372,18 +418,15 @@ def wrap_lines(lines, font, max_width):
             if font.size(test_line)[0] <= max_width:
                 current_line = test_line
             else:
-                wrapped.append(current_line)
+                if current_line:
+                    wrapped.append(current_line)
                 current_line = word
         if current_line:
             wrapped.append(current_line)
     return wrapped
 
+# Öğrenme ekranı fonksiyonu
 def learnScreen(screen):
-    """
-    Learn ekranı: 'Return' butonu aynı oval stile sahip, tıklayınca animasyon + menüye dönüş.
-    İçeride mor/pembe kutu çizip, başlık (büyük) + satırlar (küçük) ve
-    satırları kutuya sığdırmak için wrap_lines yapıyoruz.
-    """
     running = True
     clock = p.time.Clock()
 
@@ -391,73 +434,67 @@ def learnScreen(screen):
     button_height = 100
     scale_factor = SCREEN_HEIGHT / 1080
 
-    # Return butonu
     font_return = p.font.SysFont("comicsans", int(50 * scale_factor), True)
     return_x = int(SCREEN_WIDTH * 0.10)
     return_y = int(SCREEN_HEIGHT * 0.08)
     return_button_rect = None
 
-    # İki farklı font: başlık, satır
-    title_font = p.font.SysFont("comicsans", int(40 * scale_factor), True)
-    line_font  = p.font.SysFont("comicsans", int(25 * scale_factor), False)
+    title_font = p.font.SysFont("comicsans", int(100 * scale_factor), True)
+    line_font = p.font.SysFont("comicsans", int(25 * scale_factor), False)
 
-    # Örnek veriler
-    bird_opening_title = "BİRD AÇILIŞI"
-    bird_opening_lines = [
-        "f4 – Beyaz, piyonunu f2’den f4’e sürerek merkeze dolaylı baskı yapar.",
-        "d5 – Siyah, merkezi piyon d7’den d5’e sürerek karşılık verir. Bu aşamada siyah merkeze hakim olmak ister.",
-        "Nf3 – Beyaz, atını g1’den f3’e getirir ve piyon f4'ü desteklemeye devam eder.",
-        "g6 – Siyah, filini g7'ye geliştirmek için g6 sürer (fianchetto planı).",
-        "g3 – Beyaz da benzer şekilde g2'ye filini yerleştirmek isteyebilir.",
-        "Bg2 – Fil g2'de konumlanır ve çaprazdan merkeze baskı yapar.",
+    background_image = p.image.load("images/backgroundphoto1.jpg")
+    background_image = p.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    box_data = [
+        {"title": "ITALİAN GAME", "lines": ["1, W"]},
+        {"title": "İTALIAN GAME", "lines": ["White pawn e2 to e4", "1... Black pawn e7 to e5", "White knight g1 to f3", "2... Black knight b8 to c6", "White bishop f1 to c4"]},
+        {"title": "SİCİLYA SAVUNMASI", "lines": ["e4 – Beyaz piyonunu merkeze sürer.", "c5 – Siyah, piyonunu c5’e sürer."]},
+        {"title": "CARO-KANN SAVUNMASI", "lines": ["e4 – Beyaz merkeze oynar.", "c6 – Siyah, piyonunu c6’ya sürer."]},
+        {"title": "FRANSIZ SAVUNMASI", "lines": ["e4 – Beyaz piyonunu e4’e sürer.", "e6 – Siyah, piyonunu e6’ya oynar."]},
+        {"title": "İSKANDİNAV SAVUNMASI", "lines": ["e4 – Beyaz merkeze oynar.", "d5 – Siyah, piyonunu d5’e sürer."]}
     ]
 
-    # Kutunun boyutu
-    rect_width = int(600 * scale_factor)
-    rect_height = int(400 * scale_factor)
-    rect_x = SCREEN_WIDTH // 2 - rect_width // 2
-    rect_y = SCREEN_HEIGHT // 2 - rect_height // 2
+    spacing = int(50 * scale_factor)
+    rect_width = int(500 * scale_factor)
+    rect_height = int(50 * scale_factor)
+    rect_x_center = SCREEN_WIDTH // 2 - rect_width // 2
+    rect_x_left = rect_x_center - rect_width - spacing
+    rect_x_right = rect_x_center + rect_width + spacing
+    scroll_offset = 0
+    start_y_offset = return_y + button_height + int(50 * scale_factor)
+    max_scroll = len(box_data) // 3 * 350 - SCREEN_HEIGHT // 2 + start_y_offset
+    invisible_limit_y = return_y + button_height + 20
 
-    def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, margin=20):
-        """
-        'Temaya uygun' mor/pembe kutu çiz, üstüne başlık (büyük) + satır metinleri (küçük).
-        Yazılar beyaz.
-        """
-        # 1) Kutuyu mor/pembe renkte çiz (örn. (123,6,158)) ve border_radius ekleyelim
-        p.draw.rect(surface, (123, 6, 158), box_rect, border_radius=15)
-
-        # 2) Başlık
-        title_surf = big_font.render(title, True, (255, 255, 255))
-        tx = box_rect.x + margin
-        ty = box_rect.y + margin
-        surface.blit(title_surf, (tx, ty))
-
-        # 3) Satır metinleri: önce wrap
-        max_text_width = box_rect.width - margin*2
-        wrapped_lines = wrap_lines(lines, small_font, max_text_width)
-
-        line_spacing = small_font.get_height() + 5
-        current_y = ty + big_font.get_height() + 10
-
-        for w_line in wrapped_lines:
-            line_surf = small_font.render(w_line, True, (255,255,255))
-            surface.blit(line_surf, (box_rect.x + margin, current_y))
-            current_y += line_spacing
+    def draw_scrollbar():
+        bar_height = max(50, SCREEN_HEIGHT * (SCREEN_HEIGHT / (len(box_data) * 120)))
+        bar_pos = (SCREEN_HEIGHT - bar_height) * (scroll_offset / max_scroll if max_scroll > 0 else 0)
+        p.draw.rect(screen, (200, 200, 200), (SCREEN_WIDTH - 30, bar_pos, 20, bar_height))
 
     while running:
+        screen.blit(background_image, (0, 0))
         mouse_pos = p.mouse.get_pos()
         mouse_click = False
-
         for event in p.event.get():
             if event.type == p.QUIT:
                 p.quit()
                 sys.exit()
             elif event.type == p.MOUSEBUTTONDOWN:
                 mouse_click = True
+            elif event.type == p.MOUSEWHEEL:
+                scroll_offset -= event.y * 50
+                scroll_offset = max(0, min(scroll_offset, max_scroll))
 
-        screen.fill((0, 0, 0))  # Arka plan siyah
+        # OPENINGS Başlığı Ekleme
+        title_surf = title_font.render("OPENINGS", True, (255, 255, 255))
+        screen.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, int(20 * scale_factor)))
 
-        # Return butonu (oval)
+        for i, box in enumerate(box_data):
+            x = [rect_x_left, rect_x_center, rect_x_right][i % 3]
+            y = (i // 3) * 350 - scroll_offset + start_y_offset
+            if y > invisible_limit_y:
+                draw_text_in_box(screen, box["title"], box["lines"], p.Rect(x, y, rect_width, 100), title_font, line_font)
+        draw_scrollbar()
+
         hovered_return_button = (return_button_rect is not None and return_button_rect.collidepoint(mouse_pos))
         return_button_rect = draw_button(
             'Return',
@@ -474,15 +511,6 @@ def learnScreen(screen):
             running = False
             return  # Ekran güncellenmeden önce fonksiyondan çık
 
-        # Mor/pembe kutu + başlık + satır metinleri
-        draw_text_in_box(
-            screen,
-            bird_opening_title,
-            bird_opening_lines,
-            p.Rect(rect_x, rect_y, rect_width, rect_height),
-            title_font,
-            line_font
-        )
-
         p.display.flip()
         clock.tick(60)
+
