@@ -360,6 +360,24 @@ def mainMenu(first_time=False):
     drawMenu(screen)
 
 # ========================== YENİ EKLEMELER ==========================
+def wrap_lines(lines, font, max_width):
+    wrapped = []
+    for line in lines:
+        words = line.split()
+        current_line = ""
+        for word in words:
+            test_line = (current_line + " " + word).strip() if current_line else word
+            if font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    wrapped.append(current_line)
+                current_line = word
+        if current_line:
+            wrapped.append(current_line)
+    return wrapped
+
+# Öğrenme ekranı fonksiyonu
 def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, margin=20):
     def wrap_text(text, font, max_width):
         words = text.split(' ')
@@ -378,7 +396,6 @@ def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, marg
 
     # Metni kutunun genişliğine göre satırlara ayır
     wrapped_title_lines = wrap_text(title, big_font, box_rect.width - margin * 2)
-
     max_text_width = box_rect.width - margin * 2
     wrapped_lines = wrap_lines(lines, small_font, max_text_width)
 
@@ -387,7 +404,7 @@ def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, marg
             len(wrapped_title_lines) * (big_font.get_height() + 5) +
             (len(wrapped_lines) * line_spacing) + margin * 2
     )
-    box_rect.height = max(total_height, 100)
+    box_rect.height = total_height
 
     # Kutuyu çiz
     p.draw.rect(surface, (123, 6, 158), box_rect, border_radius=15)
@@ -407,25 +424,6 @@ def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, marg
         current_y += line_spacing
 
 
-# Metni kutu içine sığdıran yardımcı fonksiyon
-def wrap_lines(lines, font, max_width):
-    wrapped = []
-    for line in lines:
-        words = line.split()
-        current_line = ""
-        for word in words:
-            test_line = (current_line + " " + word).strip() if current_line else word
-            if font.size(test_line)[0] <= max_width:
-                current_line = test_line
-            else:
-                if current_line:
-                    wrapped.append(current_line)
-                current_line = word
-        if current_line:
-            wrapped.append(current_line)
-    return wrapped
-
-# Öğrenme ekranı fonksiyonu
 def learnScreen(screen):
     running = True
     clock = p.time.Clock()
@@ -439,8 +437,8 @@ def learnScreen(screen):
     return_y = int(SCREEN_HEIGHT * 0.08)
     return_button_rect = None
 
-    title_font = p.font.SysFont("comicsans", int(100 * scale_factor), True)
-    line_font = p.font.SysFont("comicsans", int(25 * scale_factor), False)
+    title_font = p.font.SysFont("comicsans", int(50 * scale_factor), True)
+    line_font = p.font.SysFont("comicsans", int(20 * scale_factor), False)
 
     background_image = p.image.load("images/backgroundphoto1.jpg")
     background_image = p.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -454,24 +452,31 @@ def learnScreen(screen):
         {"title": "İSKANDİNAV SAVUNMASI", "lines": ["e4 – Beyaz merkeze oynar.", "d5 – Siyah, piyonunu d5’e sürer."]}
     ]
 
-    spacing = int(50 * scale_factor)
-    rect_width = int(500 * scale_factor)
-    rect_height = int(50 * scale_factor)
+    spacing = int(60 * scale_factor)
+    rect_width = int(380 * scale_factor)
     rect_x_center = SCREEN_WIDTH // 2 - rect_width // 2
     rect_x_left = rect_x_center - rect_width - spacing
     rect_x_right = rect_x_center + rect_width + spacing
     scroll_offset = 0
-    start_y_offset = return_y + button_height + int(50 * scale_factor)
-    max_scroll = len(box_data) // 3 * 350 - SCREEN_HEIGHT // 2 + start_y_offset
+    start_y_offset = return_y + button_height + int(60 * scale_factor)
+    max_scroll = len(box_data) // 3 * 400 - SCREEN_HEIGHT // 2 + start_y_offset
     invisible_limit_y = return_y + button_height + 20
 
+    scrollbar_color = (200, 50, 255)  # Temaya uygun mor-pembe renk
+    scroll_knob_color = (130, 50, 180)  # Kaydırma çubuğu için beyaz renk
+
     def draw_scrollbar():
-        bar_height = max(50, SCREEN_HEIGHT * (SCREEN_HEIGHT / (len(box_data) * 120)))
-        bar_pos = (SCREEN_HEIGHT - bar_height) * (scroll_offset / max_scroll if max_scroll > 0 else 0)
-        p.draw.rect(screen, (200, 200, 200), (SCREEN_WIDTH - 30, bar_pos, 20, bar_height))
+        bar_height = max(50, int(SCREEN_HEIGHT * 0.2))  # Daha kalın bir scrollbar
+        bar_pos = int((SCREEN_HEIGHT - bar_height) * (scroll_offset / max_scroll if max_scroll > 0 else 0))
+        p.draw.rect(screen, scrollbar_color, (SCREEN_WIDTH - 20, 0, 16, SCREEN_HEIGHT))  # Kalın scrollbar
+        p.draw.rect(screen, scroll_knob_color, (SCREEN_WIDTH - 20, bar_pos, 16, bar_height))  # Kalın kaydırma çubuğu
 
     while running:
         screen.blit(background_image, (0, 0))
+
+        title_surf = title_font.render("OPENINGS", True, (255, 255, 255))
+        screen.blit(title_surf, ((SCREEN_WIDTH // 2) - (title_surf.get_width() // 2), int(20 * scale_factor)))
+
         mouse_pos = p.mouse.get_pos()
         mouse_click = False
         for event in p.event.get():
@@ -484,15 +489,13 @@ def learnScreen(screen):
                 scroll_offset -= event.y * 50
                 scroll_offset = max(0, min(scroll_offset, max_scroll))
 
-        # OPENINGS Başlığı Ekleme
-        title_surf = title_font.render("OPENINGS", True, (255, 255, 255))
-        screen.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, int(20 * scale_factor)))
-
         for i, box in enumerate(box_data):
             x = [rect_x_left, rect_x_center, rect_x_right][i % 3]
-            y = (i // 3) * 350 - scroll_offset + start_y_offset
-            if y > invisible_limit_y:
-                draw_text_in_box(screen, box["title"], box["lines"], p.Rect(x, y, rect_width, 100), title_font, line_font)
+            y = (i // 3) * 400 - scroll_offset + start_y_offset
+            if y + 100 > invisible_limit_y:  # Kutunun üst kısmı sınırı aşarsa çizilmez
+                draw_text_in_box(screen, box["title"], box["lines"], p.Rect(x, y, rect_width, 100), title_font,
+                                 line_font)
+            draw_scrollbar()
         draw_scrollbar()
 
         hovered_return_button = (return_button_rect is not None and return_button_rect.collidepoint(mouse_pos))
@@ -507,10 +510,9 @@ def learnScreen(screen):
         )
 
         if return_button_rect and return_button_rect.collidepoint(mouse_pos) and mouse_click:
-            startButtonAnimation(screen, return_button_rect, skip_loading=True)
             running = False
-            return  # Ekran güncellenmeden önce fonksiyondan çık
 
         p.display.flip()
         clock.tick(60)
+
 

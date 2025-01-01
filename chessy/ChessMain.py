@@ -180,11 +180,12 @@ def main(player_one=True, player_two=True):
 
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z:  # Undo
-                    game_state.undoMove()
-                    move_made = True
-                    animate = False
-                    game_over = False
-                    move_undone = True
+                    if len(game_state.move_log) > 0:
+                        game_state.undoMove()
+                        move_made = True
+                        animate = False
+                        game_over = False
+                        move_undone = True
                 if e.key == p.K_r:  # Reset
                     game_state = ChessEngine.GameState()
                     valid_moves = game_state.getValidMoves()
@@ -217,21 +218,18 @@ def main(player_one=True, player_two=True):
                 game_state.makeMove(ai_move)
                 move_made = True
 
-        # Eğer hamle yapıldıysa
         if move_made:
-            # Piyon terfisi kontrolü yapmak istiyorsak (hamle sonrası)
-            last_move = game_state.move_log[-1]
-            if last_move.is_pawn_promotion:
-                if human_turn:
-                    # İnsan promosyon
-                    promoted_piece_type = showPromotionUI(screen)
-                    row, col = last_move.end_row, last_move.end_col
-                    game_state.board[row][col] = last_move.piece_moved[0] + promoted_piece_type
-                else:
-                    # AI rastgele seçsin
-                    promoted_piece_type = random.choice(["Q", "R", "B", "N"])
-                    row, col = last_move.end_row, last_move.end_col
-                    game_state.board[row][col] = last_move.piece_moved[0] + promoted_piece_type
+            if len(game_state.move_log) > 0:  # move_log boş değilse işlemi yap
+                last_move = game_state.move_log[-1]
+                if last_move.is_pawn_promotion:
+                    if human_turn:
+                        promoted_piece_type = showPromotionUI(screen)
+                        row, col = last_move.end_row, last_move.end_col
+                        game_state.board[row][col] = last_move.piece_moved[0] + promoted_piece_type
+                    else:
+                        promoted_piece_type = random.choice(["Q", "R", "B", "N"])
+                        row, col = last_move.end_row, last_move.end_col
+                        game_state.board[row][col] = last_move.piece_moved[0] + promoted_piece_type
 
             valid_moves = game_state.getValidMoves()
             move_made = False
