@@ -10,6 +10,10 @@ from ChessConstants import start_sound, check_sound, click_sound, piece_select_s
 from ChessMenu import mainMenu, generateStars
 from chessy import ChessGlobals
 
+saved_friend_game_state = None
+saved_ai_game_state = None
+
+
 p.init()
 p.mixer.init()
 
@@ -86,6 +90,8 @@ def showPromotionUI(screen):
     return chosen_type
 
 def main(player_one=True, player_two=True):
+    global saved_friend_game_state, saved_ai_game_state
+
     p.init()
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.FULLSCREEN)
     clock = p.time.Clock()
@@ -99,7 +105,19 @@ def main(player_one=True, player_two=True):
         p.mixer.music.set_volume(0.2)
         p.mixer.music.play(-1)
 
-    game_state = ChessEngine.GameState()
+    if player_two:  # Play with Friend
+        if saved_friend_game_state:
+            game_state = saved_friend_game_state
+            saved_friend_game_state = None
+        else:
+            game_state = ChessEngine.GameState()
+    else:  # Play with Computer
+        if saved_ai_game_state:
+            game_state = saved_ai_game_state
+            saved_ai_game_state = None
+        else:
+            game_state = ChessEngine.GameState()
+
     valid_moves = game_state.getValidMoves()
     move_made = False
     animate = False
@@ -133,10 +151,15 @@ def main(player_one=True, player_two=True):
                 mouse_pos = p.mouse.get_pos()
                 # Return to Menu butonuna tıklama
                 if return_button.collidepoint(mouse_pos):
-                    if e.type == p.MOUSEBUTTONDOWN and e.button == 1:
+                    if e.button == 1:
+                        if player_two:
+                            saved_friend_game_state = game_state  # Play with Friend için kaydet
+                        else:
+                            saved_ai_game_state = game_state  # Play with Computer için kaydet
                         check_sound.stop()
-                        mainMenu()
+                        mainMenu()  # Ana menüye dön
                         return
+
                 # Sadece sol tık (button=1)
                 if e.button == 1:
                     location = p.mouse.get_pos()
@@ -254,6 +277,7 @@ def main(player_one=True, player_two=True):
         # Checkmate / Stalemate kontrolü
         if game_state.checkmate:
             game_over = True
+            p.mixer.music.stop()  # Oyun bittiğinde müziği durdur
             if game_state.white_to_move:
                 drawEndGameText(screen, "Black wins by checkmate")
             else:

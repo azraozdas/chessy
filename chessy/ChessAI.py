@@ -1,7 +1,6 @@
 
 import random
 
-import ChessEngine
 
 def evaluateBoard(game_state):
     piece_scores = {
@@ -101,5 +100,3 @@ def findBestMoveMinimax(game_state, valid_moves, depth=6):
         return findRandomMove(valid_moves)
     else:
         return best_move
-
-###

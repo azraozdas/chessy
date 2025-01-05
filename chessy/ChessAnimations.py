@@ -1,9 +1,9 @@
 import random
+
 import pygame as p
-import ChessMenu
+
 from chessy import ChessGlobals
 from chessy.ChessConstants import move_sound, captured_sound
-
 
 stars = []
 
@@ -43,32 +43,23 @@ def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, draw
         p.display.flip()
         clock.tick(60)
 
-    # Tahtanın yeni durumunu güncelle
     board[move.end_row][move.end_col] = move.piece_moved
 
     if move.piece_captured != "--":
-        # 1) Sesi çal
         if captured_sound and ChessGlobals.is_sfx_on:
-            captured_sound.set_volume(1.0)  # isterseniz
+            captured_sound.set_volume(1.0)
             captured_sound.play()
 
-        # 2) Efekti yap
         growAndShrinkEffect(screen, move.piece_moved, move.end_row, move.end_col, SQUARE_SIZE, IMAGES)
 
 
 def drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES):
-    """
-    Redraw a single square on the board.
-    """
-    # Renkleri doğru ayarla
     colors = [p.Color(255, 102, 242), p.Color(123, 6, 158)]
     color = colors[(row + col) % 2]
 
-    # Kareyi temizle
     square_rect = p.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
     p.draw.rect(screen, color, square_rect)
 
-    # Eğer `board` geçerliyse ve karede taş varsa, taşı yeniden çiz
     if board is not None:
         piece = board[row][col]
         if piece != "--":
@@ -76,9 +67,6 @@ def drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES):
 
 
 def joyEffect(screen, row, col, SQUARE_SIZE):
-    """
-    Display a yellow ring (transparent inside) that grows in size and fades away.
-    """
     center_x = col * SQUARE_SIZE + SQUARE_SIZE // 2
     center_y = row * SQUARE_SIZE + SQUARE_SIZE // 2
 
@@ -99,71 +87,53 @@ def joyEffect(screen, row, col, SQUARE_SIZE):
         p.time.delay(20)
 
 def popEffect(screen, captured_piece, row, col, SQUARE_SIZE, IMAGES, board):
-    """
-    Make the captured piece shrink and disappear smoothly.
-    """
     center_x = col * SQUARE_SIZE + SQUARE_SIZE // 2
     center_y = row * SQUARE_SIZE + SQUARE_SIZE // 2
 
     start_size = SQUARE_SIZE
-    min_size = 0  # Taş tamamen kaybolana kadar küçülecek
-    steps = 15  # Küçülme adımları
+    min_size = 0
+    steps = 15
 
     for step in range(steps):
-        # Mevcut boyutu hesapla
         current_size = start_size - (step * (start_size - min_size) // steps)
-
-        # Taşı yeniden boyutlandır ve konumlandır
         if current_size > 0:  # Boyut sıfır olduğunda artık çizme
             scaled_piece = p.transform.scale(IMAGES[captured_piece], (current_size, current_size))
             rect = scaled_piece.get_rect(center=(center_x, center_y))
 
-            # Kareyi temizle
             drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES)
 
-            # Yeniden boyutlandırılmış taşı çiz
             screen.blit(scaled_piece, rect)
 
-        # Ekranı güncelle
         p.display.flip()
         p.time.delay(20)
 
-    # Tahtada kareyi temizle (taş tamamen kayboldu)
     board[row][col] = "--"
     drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES)
 
 def growAndShrinkEffect(screen, piece, row, col, SQUARE_SIZE, IMAGES):
-    """
-    Make the piece grow and shrink upon reaching the target square.
-    """
     center_x = col * SQUARE_SIZE + SQUARE_SIZE // 2
     center_y = row * SQUARE_SIZE + SQUARE_SIZE // 2
 
     start_size = SQUARE_SIZE
     max_size = int(SQUARE_SIZE * 1.5)  # %50 büyüme
-    steps = 10  # Daha hızlı animasyon için adım sayısı
+    steps = 10
 
     for step in range(steps):
-        # Boyutu hesapla (ilk yarıda büyüme, ikinci yarıda küçülme)
         if step < steps // 2:
             current_size = start_size + (step * (max_size - start_size) // (steps // 2))
         else:
             current_size = max_size - ((step - steps // 2) * (max_size - start_size) // (steps // 2))
 
-        # Taşı yeniden boyutlandır
         scaled_piece = p.transform.scale(IMAGES[piece], (current_size, current_size))
         rect = scaled_piece.get_rect(center=(center_x, center_y))
 
-        # Kareyi temizlemeden taşı çiz
         drawSingleSquare(screen, None, row, col, SQUARE_SIZE, IMAGES)
         screen.blit(scaled_piece, rect)
 
-        # Ekranı güncelle
         p.display.flip()
         p.time.delay(20)
 
 def generateStars(x, y, count=40):
-    """Generate stars at the specified location."""
     global stars
     for _ in range(count):
         stars.append({
@@ -178,17 +148,14 @@ def generateStars(x, y, count=40):
 
 
 def drawStars(screen):
-    """Draw stars and update their position."""
     global stars
     for star in stars:
         p.draw.circle(screen, star['color'], (int(star['x']), int(star['y'])), star['size'])
         star['x'] += star['dx']
         star['y'] += star['dy']
         star['life'] -= 1
-    stars = [star for star in stars if star['life'] > 0]  # Remove stars that have "died"
+    stars = [star for star in stars if star['life'] > 0]
 
 if __name__ == "__main__":
     from ChessMain import main
     main()
-
-###
