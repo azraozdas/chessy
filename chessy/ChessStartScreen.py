@@ -22,7 +22,7 @@ def intro_screen():
     uelogo = pygame.image.load("images/uelogo.png").convert_alpha()
     uelogo_rect = uelogo.get_rect(center=(SCREEN_WIDTH/ 2, SCREEN_HEIGHT / 2))
 
-    kingsgambitlogo = pygame.image.load("images/kingsgambitteamlogo.png").convert_alpha()
+    kingsgambitlogo = pygame.image.load("images/teamlogo.png").convert_alpha()
     kingsgambitlogo_rect = kingsgambitlogo.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
 
     alpha = 0
@@ -58,14 +58,14 @@ def intro_screen():
                     alpha = 255 - int((elapsed_ticks - (wait_time + fade_in_time + 1000)) / fade_out_time * 255)
                 else:
                     alpha = 0
-                    phase = "kingsgambitlogo"
+                    phase = "teamlogo"
                     start_ticks = pygame.time.get_ticks()
 
             uelogo.set_alpha(alpha)
             screen.fill((0, 0, 0))
             screen.blit(uelogo, uelogo_rect)
 
-        elif phase == "kingsgambitlogo":
+        elif phase == "teamlogo":
             elapsed_ticks = pygame.time.get_ticks() - start_ticks
 
             if elapsed_ticks > pause_between:

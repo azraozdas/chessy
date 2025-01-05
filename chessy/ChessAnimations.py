@@ -9,17 +9,11 @@ stars = []
 
 
 def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces):
-    """
-    Perform the move animation and trigger effects after the animation completes.
-    """
-    from ChessAnimations import growAndShrinkEffect
 
-    # Hareket başlangıcında ses efekti çal (eğer başka bir ses çalmıyorsa)
     if move_sound and not p.mixer.get_busy():
         if ChessGlobals.is_sfx_on:
             move_sound.play()
 
-    # Başlangıç karesini tahtada hemen temizle
     board[move.start_row][move.start_col] = "--"
 
     d_row = move.end_row - move.start_row
@@ -31,15 +25,12 @@ def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, draw
         row = move.start_row + d_row * frame / frame_count
         col = move.start_col + d_col * frame / frame_count
 
-        # Tahtayı ve taşları yeniden çiz
         drawBoard(screen)
         drawPieces(screen, board)
 
-        # Hareket eden taşı geçici pozisyonda çiz
         piece_rect = p.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
         screen.blit(IMAGES[move.piece_moved], piece_rect)
 
-        # Ekranı güncelle
         p.display.flip()
         clock.tick(60)
 
