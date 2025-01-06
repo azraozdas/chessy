@@ -118,7 +118,7 @@ def startButtonAnimation(screen, button, skip_loading=False):
 
     if not skip_loading:
         screen.fill((0, 0, 0))
-        loading_font = p.font.SysFont("comicsans", 60, True)
+        loading_font = p.font.SysFont("Times New Roman", 60, True)
         loading_surface = loading_font.render("Loading...", True, (255, 255, 255))
         screen.blit(
             loading_surface,
@@ -243,10 +243,10 @@ def drawMenu(screen):
     submenu_open = False
     scale_factor = SCREEN_HEIGHT / 1080
 
-    font = p.font.SysFont("comicsans", int(50 * scale_factor), True)
-    title_font = p.font.SysFont("comicsans", int(180 * scale_factor), True)
-    creators_font = p.font.SysFont("comicsans", int(20 * scale_factor), True)
-    copyright_font = p.font.SysFont("arial", int(20 * scale_factor))
+    font = p.font.SysFont("Times New Roman", int(50 * scale_factor), True)
+    title_font = p.font.SysFont("Times New Roman", int(120 * scale_factor), True)
+    creators_font = p.font.SysFont("Times New Roman", int(20 * scale_factor), True)
+    copyright_font = p.font.SysFont("Times New Roman", int(20 * scale_factor))
 
     button_width = 300
     button_height = 100
@@ -443,8 +443,8 @@ def drawMenu(screen):
 def ControlScreen(screen):
     running = True
     clock = p.time.Clock()
-    font = p.font.SysFont("comicsans", 90, True)  # Başlık fontu büyütüldü
-    small_font = p.font.SysFont("comicsans", 50)
+    font = p.font.SysFont("Times New Roman", 90, True)  # Başlık fontu büyütüldü
+    small_font = p.font.SysFont("Times New Roman", 50)
 
     background_image = p.image.load("images/controlscreen1.jpg")
     background_image = p.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -514,14 +514,14 @@ def learnScreen(screen):
     button_height = 100
     scale_factor = SCREEN_HEIGHT / 1080
 
-    font_return = p.font.SysFont("comicsans", int(50 * scale_factor), True)
+    font_return = p.font.SysFont("Times New Roman", int(50 * scale_factor), True)
     return_x = int(SCREEN_WIDTH * 0.10)
     return_y = int(SCREEN_HEIGHT * 0.08)
     return_button_rect = None
 
-    title_font = p.font.SysFont("comicsans", int(100 * scale_factor), True)  # Büyütülmüş başlık fontu
-    card_title_font = p.font.SysFont("comicsans", int(40 * scale_factor), True)  # Kart başlık fontu
-    line_font = p.font.SysFont("comicsans", int(20 * scale_factor), True)
+    title_font = p.font.SysFont("Times New Roman", int(100 * scale_factor), True)  # Büyütülmüş başlık fontu
+    card_title_font = p.font.SysFont("Times New Roman", int(40 * scale_factor), True)  # Kart başlık fontu
+    line_font = p.font.SysFont("Times New Roman", int(20 * scale_factor), True)
 
     background_image = p.image.load("images/learnscreen1.jpg")
     background_image = p.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -569,6 +569,65 @@ def learnScreen(screen):
             "2. White knight g1 to f3",
             "2...Black knight g8 to f6",
             "3. White pawn d2 to d3"]},
+        {"title": "SCOTCH GAME", "lines": [
+            "1. White pawn e2 to e4",
+            "1...Black pawn e7 to e5",
+            "2. White knight g1 to f3",
+            "2...Black knight b8 to c6",
+            "3. White pawn d2 to d4"]},
+        {"title": "NIMZO-INDIAN DEFENSE", "lines": [
+            "1. White pawn d2 to d4",
+            "1...Black knight g8 to f6",
+            "2. White pawn c2 to c4",
+            "2...Black bishop f8 to b4"]},
+        {"title": "ALEKHINE DEFENSE", "lines": [
+            "1. White pawn e2 to e4",
+            "1...Black knight g8 to f6"]},
+        {"title": "GRÜNFELD DEFENSE", "lines": [
+            "1. White pawn d2 to d4",
+            "1...Black knight g8 to f6",
+            "2. White pawn c2 to c4",
+            "2...Black pawn d7 to d5"]},
+        {"title": "BENONI DEFENSE", "lines": [
+            "1. White pawn d2 to d4",
+            "1...Black pawn c7 to c5",
+            "2. White pawn d4 to d5",
+            "2...Black pawn e7 to e6"]},
+        {"title": "CATALAN OPENING", "lines": [
+            "1. White pawn d2 to d4",
+            "1...Black pawn d7 to d5",
+            "2. White pawn c2 to c4",
+            "2...Black pawn e7 to e6",
+            "3. White bishop f1 to g2"]},
+        {"title": "LONDON SYSTEM", "lines": [
+            "1. White pawn d2 to d4",
+            "1...Black pawn d7 to d5",
+            "2. White bishop c1 to f4"]},
+        {"title": "EVANS GAMBIT", "lines": [
+            "1. White pawn e2 to e4",
+            "1...Black pawn e7 to e5",
+            "2. White knight g1 to f3",
+            "2...Black knight b8 to c6",
+            "3. White bishop f1 to c4",
+            "3...Black pawn b7 to b5"]},
+        {"title": "SCANDINAVIAN DEFENSE", "lines": [
+            "1. White pawn e2 to e4",
+            "1...Black pawn d7 to d5"]},
+        {"title": "KING'S GAMBIT", "lines": [
+            "1. White pawn e2 to e4",
+            "1...Black pawn e7 to e5",
+            "2. White pawn f2 to f4"]},
+        {"title": "TARRASCH DEFENSE", "lines": [
+            "1. White pawn d2 to d4",
+            "1...Black pawn d7 to d5",
+            "2. White pawn c2 to c4",
+            "2...Black pawn e7 to e6",
+            "3. White knight b1 to c3",
+            "3...Black pawn c7 to c5"]},
+        {"title": "VIENNA GAME", "lines": [
+            "1. White pawn e2 to e4",
+            "1...Black pawn e7 to e5",
+            "2. White knight b1 to c3"]},
     ]
 
     spacing = int(60 * scale_factor)
@@ -580,7 +639,7 @@ def learnScreen(screen):
     rect_x_center = margin_x + rect_width + spacing
     rect_x_right = margin_x + 2 * (rect_width + spacing)
     start_y_offset = return_y + button_height + int(60 * scale_factor)
-    max_scroll = max(len(box_data) * (rect_height + spacing) - SCREEN_HEIGHT + start_y_offset, 0)
+    max_scroll = max((len(box_data) + columns - 1) // columns * (rect_height + spacing) + start_y_offset - SCREEN_HEIGHT, 0)
 
     invisible_limit_y = return_y + button_height + 20
 

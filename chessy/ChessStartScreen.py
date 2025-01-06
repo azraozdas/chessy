@@ -15,7 +15,8 @@ def intro_screen():
 
     clock = pygame.time.Clock()
 
-    font = pygame.font.Font(None, 200)
+    font = pygame.font.SysFont("Times New Roman", 200)
+
     text = font.render("CHESSY", True, (255, 255, 255))
     text_rect = text.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
 

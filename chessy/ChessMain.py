@@ -61,7 +61,7 @@ def showPromotionUI(screen):
     def drawButtons():
         for rect, ptype in buttons:
             p.draw.rect(screen, (200, 200, 200), rect)
-            font = p.font.SysFont("Arial", 40, True)
+            font = p.font.SysFont("Times New Roman", 40, True)
             text_surface = font.render(ptype, True, (0, 0, 0))
             tx = rect.centerx - text_surface.get_width() // 2
             ty = rect.centery - text_surface.get_height() // 2
@@ -127,7 +127,7 @@ def main(player_one=True, player_two=True):
     ai_thinking = False
     move_undone = False
     move_finder_process = None
-    move_log_font = p.font.SysFont("Arial", 14, False, False)
+    move_log_font = p.font.SysFont("Times New Roman", 14, False, False)
     mouse_pos = p.mouse.get_pos()
     mouse_click = False
 
@@ -355,7 +355,7 @@ def drawMoveLog(screen, game_state, font):
             move_pair += f"{move_log[i + 1]}"
         move_texts.append(move_pair)
 
-    font = p.font.SysFont("Arial", 20, True, False)
+    font = p.font.SysFont("Times New Roman", 20, True, False)
 
     max_lines = (MOVE_LOG_PANEL_HEIGHT - 80) // (font.get_height() + 10)
     max_columns = 5
@@ -399,7 +399,7 @@ def drawMoveLog(screen, game_state, font):
     p.draw.rect(screen, button_color, return_button)
     p.draw.rect(screen, border_color, return_button, 3)
 
-    button_font = p.font.SysFont("Arial", 28, True)
+    button_font = p.font.SysFont("Times New Roman", 28, True)
     button_text = button_font.render("Return to Menu", True, text_color)
     screen.blit(button_text, (button_x + (button_width // 2 - button_text.get_width() // 2),
                               button_y + (button_height // 2 - button_text.get_height() // 2)))
@@ -408,7 +408,7 @@ def drawMoveLog(screen, game_state, font):
 
 
 def drawEndGameText(screen, text):
-    font = p.font.SysFont("Arial", 64, True, False)
+    font = p.font.SysFont("Times New Roman", 64, True, False)
 
     neon_color = (0, 0, 0)
     glow_color = (255, 20, 147)

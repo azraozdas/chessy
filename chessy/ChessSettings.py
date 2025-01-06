@@ -43,7 +43,7 @@ def settingsScreen():
 
         font_size = 50
         while True:
-            font = p.font.SysFont("comicsans", font_size, True)
+            font = p.font.SysFont("Times New Roman", font_size, True)
             text_surface = font.render(button_text, True, (0, 0, 0))
             if text_surface.get_width() <= sound_button.width - 40:
                 break
@@ -62,7 +62,7 @@ def settingsScreen():
                 p.mixer.music.stop()
                 p.mixer.stop()
 
-        return_font = p.font.SysFont("comicsans", 30, True)
+        return_font = p.font.SysFont("Times New Roman", 30, True)
         return_text_surface = return_font.render("Return to Menu", True, (255, 255, 0))
         return_button = p.Rect(0, 0, 250, 60)
         return_button.topleft = (20, 20)
