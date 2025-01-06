@@ -139,6 +139,7 @@ def main(player_one=True, player_two=True):
         return_button = drawMoveLog(screen, game_state, move_log_font)
 
         for e in p.event.get():
+            handleScroll(e)
             if e.type == p.QUIT:
                 p.quit()
                 sys.exit()
@@ -355,6 +356,7 @@ def drawMoveLog(screen, game_state, font):
             move_pair += f"{move_log[i + 1]}"
         move_texts.append(move_pair)
 
+    font = p.font.SysFont("Arial", 20, True, False)
     font = p.font.SysFont("Times New Roman", 20, True, False)
 
     max_lines = (MOVE_LOG_PANEL_HEIGHT - 80) // (font.get_height() + 10)
@@ -400,12 +402,21 @@ def drawMoveLog(screen, game_state, font):
     p.draw.rect(screen, border_color, return_button, 3)
 
     button_font = p.font.SysFont("Times New Roman", 28, True)
+    button_font = p.font.SysFont("Times New Roman", 28, True)
     button_text = button_font.render("Return to Menu", True, text_color)
     screen.blit(button_text, (button_x + (button_width // 2 - button_text.get_width() // 2),
                               button_y + (button_height // 2 - button_text.get_height() // 2)))
 
     return return_button
 
+
+def handleScroll(event):
+    global scroll_offset
+    if event.type == p.MOUSEBUTTONDOWN:
+        if event.button == 4:  # Scroll up
+            scroll_offset = max(scroll_offset - 20, 0)
+        elif event.button == 5:  # Scroll down
+            scroll_offset += 20
 
 def drawEndGameText(screen, text):
     font = p.font.SysFont("Times New Roman", 64, True, False)
@@ -424,3 +435,5 @@ def drawEndGameText(screen, text):
 
 if __name__ == "__main__":
     mainMenu()
+
+#
