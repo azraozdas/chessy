@@ -82,6 +82,7 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
     width = int(width * scale_factor)
     height = int(height * scale_factor)
 
+
     if hover and p.Rect(x - width // 2, y - height // 2, width, height).collidepoint(p.mouse.get_pos()):
         width += int(20 * scale_factor)
         height += int(20 * scale_factor)
@@ -452,14 +453,15 @@ def ControlScreen(screen):
     control_color = (255, 255, 0)  # Yellow (Control text color)
 
     scale_factor = SCREEN_HEIGHT / 1080
-    button_height = int(100 * scale_factor)
+    button_width = 550
+    button_height = 120
 
     while running:
         screen.blit(background_image, (0, 0))
         text_y = 250
 
         title_surface = font.render("Control Guide", True, title_color)
-        screen.blit(title_surface, (SCREEN_WIDTH // 2 - title_surface.get_width() // 2, 50))  # Daha yukarı alındı
+        screen.blit(title_surface, (SCREEN_WIDTH // 2 - title_surface.get_width() // 2, 50))
 
         controls = [
             "Z - Undo",
@@ -472,15 +474,20 @@ def ControlScreen(screen):
             screen.blit(control_surface, (SCREEN_WIDTH // 2 - control_surface.get_width() // 2, text_y))
             text_y += 80
 
-        return_text = "Return to Menu"
-        return_surface = font.render(return_text, True, (255, 255, 255))
-        button_width = return_surface.get_width() + 40  # Text width + extra padding
+        # "Return to Menu" butonu
         button_x = SCREEN_WIDTH // 2
         button_y = SCREEN_HEIGHT - 150
 
-        hovered_return = False
+        mouse_pos = p.mouse.get_pos()
+        hovered_return = p.Rect(
+            button_x - button_width // 2,
+            button_y - button_height // 2,
+            button_width,
+            button_height
+        ).collidepoint(mouse_pos)
+
         return_button = draw_button(
-            return_text, font,
+            'Return to Menu', small_font,
             button_x, button_y,
             button_width, button_height,
             hovered_return,
@@ -488,26 +495,16 @@ def ControlScreen(screen):
             screen
         )
 
-        if return_button.collidepoint(p.mouse.get_pos()):
-            hovered_return = True
-            draw_button(
-                return_text, font,
-                button_x, button_y,
-                button_width + 20, button_height + 10,
-                hovered_return,
-                p.mouse.get_pressed()[0],
-                screen
-            )
-
         for event in p.event.get():
             if event.type == p.QUIT:
                 p.quit()
                 sys.exit()
             if event.type == p.MOUSEBUTTONDOWN:
-                if return_button.collidepoint(p.mouse.get_pos()):
+                if return_button.collidepoint(mouse_pos):
                     running = False
 
         p.display.flip()
+        clock.tick(60)
 
 def learnScreen(screen):
     running = True
