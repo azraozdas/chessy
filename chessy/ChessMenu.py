@@ -244,7 +244,7 @@ def drawMenu(screen):
     scale_factor = SCREEN_HEIGHT / 1080
 
     font = p.font.SysFont("Times New Roman", int(50 * scale_factor), True)
-    title_font = p.font.SysFont("Times New Roman", int(120 * scale_factor), True)
+    title_font = p.font.SysFont("Times New Roman", int(180 * scale_factor), True)
     creators_font = p.font.SysFont("Times New Roman", int(20 * scale_factor), True)
     copyright_font = p.font.SysFont("Times New Roman", int(20 * scale_factor))
 
@@ -277,7 +277,7 @@ def drawMenu(screen):
             title_font_surf,
             (
                 SCREEN_WIDTH // 2 - title_font_surf.get_width() // 2,
-                SCREEN_HEIGHT // 20
+                SCREEN_HEIGHT // 10
             )
         )
 

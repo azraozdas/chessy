@@ -5,14 +5,15 @@ import pygame as p
 from chessy import ChessGlobals
 from chessy.ChessConstants import move_sound, captured_sound
 
+move_channel = p.mixer.Channel(1)
+
 stars = []
 
 
 def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces):
-
-    if move_sound and not p.mixer.get_busy():
+    if move_sound:
         if ChessGlobals.is_sfx_on:
-            move_sound.play()
+            move_channel.play(move_sound)
 
     board[move.start_row][move.start_col] = "--"
 
