@@ -2,7 +2,6 @@ import sys
 import pygame as p
 from ChessConstants import screen, click_sound, clock
 from chessy import ChessGlobals
-from ChessMenu import draw_button, startButtonAnimation  # Animasyon fonksiyonunu içe aktar
 
 p.init()
 
@@ -13,9 +12,9 @@ def resize_background():
     global SETTINGS_BACKGROUND
     SETTINGS_BACKGROUND = p.transform.smoothscale(SETTINGS_BACKGROUND, screen.get_size())
 
-
 def settingsScreen():
     running = True
+
     resize_background()
 
     while running:
@@ -32,10 +31,8 @@ def settingsScreen():
                 p.display.set_mode((event.w, event.h), p.RESIZABLE)
                 resize_background()
 
-        # Arka planı çiz
         screen.blit(SETTINGS_BACKGROUND, (0, 0))
 
-        # SFX butonu (Sabit)
         button_text = "Sound/SFX: ON" if ChessGlobals.is_sfx_on else "Sound/SFX: OFF"
         button_color = (0, 255, 0) if ChessGlobals.is_sfx_on else (128, 128, 128)
 
@@ -44,21 +41,17 @@ def settingsScreen():
 
         p.draw.rect(screen, button_color, sound_button)
 
-        # Yazıyı butonun içine sığdır
-        font_size = sound_button.height // 3
-        font = p.font.SysFont("Times New Roman", font_size, True)
-
+        font_size = 50
         while True:
+            font = p.font.SysFont("Times New Roman", font_size, True)
             text_surface = font.render(button_text, True, (0, 0, 0))
-            if text_surface.get_width() <= sound_button.width - 20:
+            if text_surface.get_width() <= sound_button.width - 40:
                 break
             font_size -= 1
-            font = p.font.SysFont("Times New Roman", font_size, True)
 
         screen.blit(text_surface, (sound_button.centerx - text_surface.get_width() // 2,
                                    sound_button.centery - text_surface.get_height() // 2))
 
-        # SFX butonuna tıklandığında sesi aç/kapat
         if sound_button.collidepoint(mouse_pos) and mouse_click:
             ChessGlobals.is_sfx_on = not ChessGlobals.is_sfx_on
             if ChessGlobals.is_sfx_on:
@@ -69,33 +62,21 @@ def settingsScreen():
                 p.mixer.music.stop()
                 p.mixer.stop()
 
-        # "Return to Menu" butonu - Daha büyük ve köşeye yakın
-        return_button_width = 300  # Buton genişliği büyütüldü
-        return_button_height = 80  # Buton yüksekliği büyütüldü
-        return_button_x = 180  # Sol üst köşeye daha yakın
-        return_button_y = 70
+        return_font = p.font.SysFont("Times New Roman", 30, True)
+        return_text_surface = return_font.render("Return to Menu", True, (255, 255, 0))
+        return_button = p.Rect(0, 0, 250, 60)
+        return_button.topleft = (20, 20)
 
-        return_button_rect = draw_button(
-            'Return to Menu',
-            font,
-            return_button_x,
-            return_button_y,
-            return_button_width,
-            return_button_height,
-            return_button_rect.collidepoint(mouse_pos) if 'return_button_rect' in locals() else False,
-            mouse_click,
-            screen
-        )
+        p.draw.rect(screen, (123, 6, 158), return_button)
+        screen.blit(return_text_surface, (return_button.centerx - return_text_surface.get_width() // 2,
+                                          return_button.centery - return_text_surface.get_height() // 2))
 
-        # "Return to Menu" butonuna tıklanırsa animasyon başlat ve ana menüye dön
-        if return_button_rect.collidepoint(mouse_pos) and mouse_click:
-            if ChessGlobals.is_sfx_on:
-                click_sound.play()
-            startButtonAnimation(screen, return_button_rect, skip_loading=True)  # skip_loading=True eklendi
+        if return_button.collidepoint(mouse_pos) and mouse_click:
             from ChessMenu import mainMenu
             mainMenu()
             return
 
-        # Ekranı güncelle
         p.display.flip()
         clock.tick(60)
+
+#3#

@@ -380,8 +380,10 @@ def drawPieces(screen, board):
                 screen.blit(IMAGES[piece], (x_coord, y_coord))
 
 def drawMoveLog(screen, game_state, font):
+    """Hamle listesini (move log) çizer ve 'Return to Menu' butonunu döndürür."""
     global scroll_offset
 
+    # Log kutusu boyutları
     log_box_width = int(MOVE_LOG_PANEL_WIDTH * 0.6)
     log_box_height = int(MOVE_LOG_PANEL_HEIGHT * 0.8)
     log_box_x = BOARD_WIDTH + (MOVE_LOG_PANEL_WIDTH - log_box_width) // 2
@@ -405,6 +407,7 @@ def drawMoveLog(screen, game_state, font):
         border_radius=15
     )
 
+    # Taş isimleri
     piece_names = {
         "wp": "white pawn", "wR": "white rook", "wN": "white knight", "wB": "white bishop",
         "wQ": "white queen", "wK": "white king",
@@ -457,7 +460,7 @@ def drawMoveLog(screen, game_state, font):
     for m in raw_move_texts:
         wrapped = wrap_text(m, font, max_text_width)
         wrapped_texts.extend(wrapped)
-        wrapped_texts.append("")
+        wrapped_texts.append("")  # Boş satır
 
     if not hasattr(game_state, "log_surface_cache"):
         game_state.log_surface_cache = None
@@ -499,6 +502,7 @@ def drawMoveLog(screen, game_state, font):
         p.draw.rect(screen, (60, 60, 60), (scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height))
         p.draw.rect(screen, (150, 150, 150), (scrollbar_x, handle_y, scrollbar_width, handle_height))
 
+    # "Return to Menu" butonu
     button_width = log_box_width
     button_height = 50
     button_x = log_box_x
@@ -508,31 +512,26 @@ def drawMoveLog(screen, game_state, font):
     mouse_pos = p.mouse.get_pos()
     button_color = (123, 6, 158)
     border_color = (255, 102, 242)
+    text_color = (255, 255, 255)
 
-    # Hover animasyonu
     if return_button.collidepoint(mouse_pos):
         button_color = (153, 51, 204)
+        if p.mouse.get_pressed()[0]:
+            button_color = (90, 3, 120)
 
     p.draw.rect(screen, button_color, return_button)
     p.draw.rect(screen, border_color, return_button, 3)
 
     button_font = p.font.SysFont("Times New Roman", 28, True)
-    button_text = button_font.render("Return to Menu", True, (255, 255, 255))
-    screen.blit(button_text, (
-        button_x + (button_width // 2 - button_text.get_width() // 2),
-        button_y + (button_height // 2 - button_text.get_height() // 2)
-    ))
-
-    for event in p.event.get():
-        if event.type == p.MOUSEBUTTONDOWN and return_button.collidepoint(mouse_pos):
-            if ChessGlobals.is_sfx_on:
-                click_sound.play()
-            from ChessMenu import startButtonAnimation
-            startButtonAnimation(screen, return_button, skip_loading=True)
-            mainMenu()
-
+    button_text = button_font.render("Return to Menu", True, text_color)
+    screen.blit(
+        button_text,
+        (
+            button_x + (button_width // 2 - button_text.get_width() // 2),
+            button_y + (button_height // 2 - button_text.get_height() // 2)
+        )
+    )
     return return_button
-
 
 def handleScroll(event):
     """Hamle listesini kaydırmak için mouse wheel kontrolü."""
@@ -567,3 +566,5 @@ def drawEndGameText(screen, text):
 
 if __name__ == "__main__":
     mainMenu()
+
+#
