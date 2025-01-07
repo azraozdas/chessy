@@ -1,0 +1,111 @@
+Chessy - Cyberpunk Chess Game
+Overview
+Chessy is a cyberpunk-themed chess game developed in Python.
+It offers two exciting modes: play with a friend or against a computer.
+The game features animations, sound effects, and a stylish interface designed for an immersive experience.
+
+Features:
+Sound effects and animated chess piece motions.
+Particular sound effects for: Movements of the pieces.
+catching fragments.
+keeping oneself in check.
+All chess moves are shown on a separate side screen.
+A Learn section featuring well-known openings in chess.
+Shortcuts on the keyboard to improve gameplay:
+Z: Reverse the previous action.
+R: Restart the game.
+All noises may be turned on or off using the Settings menu.
+The logos of the project team and the university are displayed on the startup screen.
+Title of the game: Chessy.
+
+Getting Started
+Prerequisites
+Python 3.8 or higher.
+The following Python libraries:
+pygame
+Installation
+Clone the repository:
+bash
+Copy code
+git clone https://github.com/yourusername/chessy.git
+Navigate to the project directory:
+bash
+Copy code
+cd chessy
+Install required dependencies:
+bash
+Copy code
+pip install pygame
+
+Running the Game
+Run the main Python script to start the game:
+bash
+Copy code
+python main.py
+
+Gameplay Instructions
+Main Menu
+Play:
+Choose to play against a friend or the computer.
+Learn:
+Explore famous chess openings with descriptions.
+Settings:
+Enable or disable all game sounds.
+During Gameplay
+Use the mouse to move pieces by dragging them to valid positions.
+Keyboard shortcuts:
+Z: Undo the last move.
+R: Reset the game.
+
+Starter Screen for Games:
+
+includes the emblems of your team and institution, then the game name "Chessy."
+opens the main menu.
+
+Board for Chess:
+displays a chessboard with a cyberpunk motif.
+On a side screen, moves are recorded in real time.
+Section on Learning:
+uses interactive features to highlight well-known chess openings.
+
+Configuration:
+
+Turn on or off the sound effects.
+Details of the Features and Sound Effects
+special sound effects for captures and piece movements.
+When a player is in check, a unique sound is produced.
+Reset and Undo
+Use the Z key to reverse the previous action.
+Use the R key to restart the game.
+Study well-known chess openings, such as the Queen's Gambit and the Sicilian Defense.
+
+Contributions
+We welcome contributions! Please follow these steps:
+
+Fork the repository.
+Create a feature branch:
+bash
+
+Copy code
+git checkout -b feature-name
+Commit your changes:
+bash
+
+Copy code
+git commit -m "Add feature-name"
+Push to the branch:
+bash
+Copy code
+git push origin feature-name
+Create a pull request.
+
+Credits
+Team Name: [King's Gambit]
+University: [University of Europe for Applied Sciences ]
+Contributors:
+[Dilay Tarhan]
+[Azra Özdaş]
+[Müslüm Selim Akşahin]
+
+License
+This project is licensed under the MIT License. See the LICENSE file for details.
