@@ -78,11 +78,19 @@ def findBestMove(game_state, valid_moves, return_queue):
 def findMoveNegaMaxAlphaBeta(game_state, valid_moves, depth, alpha, beta, turn_multiplier):
     if depth == 0:
         return turn_multiplier * scoreBoard(game_state)
+
     max_score = -CHECKMATE
     for move in valid_moves:
         game_state.makeMove(move)
         ChessGlobals.next_moves = game_state.getValidMoves()
-        score = -findMoveNegaMaxAlphaBeta(game_state, ChessGlobals.next_moves, depth - 1, -beta, -alpha, -turn_multiplier)
+
+        # Eğer AI kendi şahını tehlikeye atıyorsa, bu hamleyi iptal et
+        if game_state.inCheck():
+            game_state.undoMove()
+            continue
+
+        score = -findMoveNegaMaxAlphaBeta(game_state, ChessGlobals.next_moves, depth - 1, -beta, -alpha,
+                                          -turn_multiplier)
         if score > max_score:
             max_score = score
             if depth == DEPTH:

@@ -135,7 +135,7 @@ def main(player_one=True, player_two=True):
     ai_thinking = False
     move_undone = False
     move_finder_process = None
-    move_log_font = p.font.SysFont("Times New Roman", 14, False, False)
+    move_log_font = p.font.SysFont("Times New Roman", 25, False, False)
 
     while running:
         # Beyazın sırası mı, siyahın sırası mı?
@@ -296,18 +296,14 @@ def main(player_one=True, player_two=True):
         if not game_over:
             drawMoveLog(screen, game_state, move_log_font)
 
-        # Kazanma/berabere kontrolleri
+        # Oyun biterse kazanan/berabere mesajını çiz
         if game_state.checkmate:
-            game_over = True
-            p.mixer.music.stop()
             check_sound.stop()
-            in_check_prev = False
             if game_state.white_to_move:
                 drawEndGameText(screen, "Black wins by checkmate")
             else:
                 drawEndGameText(screen, "White wins by checkmate")
         elif game_state.stalemate:
-            game_over = True
             drawEndGameText(screen, "Stalemate")
 
         clock.tick(MAX_FPS)
