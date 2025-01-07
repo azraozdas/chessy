@@ -1,46 +1,54 @@
 import random
 import sys
-
 import pygame as p
-
 from threading import Thread
 from multiprocessing import Queue
 
 import ChessAI
 import ChessEngine
-from ChessAnimations import animateMove, lerp_color, drawBreathingRectWithColorTransition
-from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound
-from ChessMenu import mainMenu, generateStars
-from chessy import ChessGlobals
 
+# Sesler ve ekran bilgileri ChessConstants.py'de tanımlı
+from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT, clock
+from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound
+from chessy import ChessGlobals
+from ChessMenu import mainMenu, generateStars
+from ChessAnimations import animateMove, lerp_color, drawBreathingRectWithColorTransition
+
+# Global değişkenler
 saved_friend_game_state = None
 saved_ai_game_state = None
+scroll_offset = 0  # Hamle log'u için scroll offset
 
-# scroll_offset'i global tutabilir veya game_state gibi bir objenin içinde saklayabilirsiniz.
-scroll_offset = 0  # Başlangıçta 0 piksel kaydırma
-
-p.init()
-p.mixer.init()
-
-SCREEN_WIDTH = p.display.Info().current_w
-SCREEN_HEIGHT = p.display.Info().current_h
-
+# Dinamik boyutlandırma
 BOARD_WIDTH = min(SCREEN_WIDTH, SCREEN_HEIGHT)
 BOARD_HEIGHT = BOARD_WIDTH
-MOVE_LOG_PANEL_WIDTH = SCREEN_WIDTH - BOARD_WIDTH
-MOVE_LOG_PANEL_HEIGHT = SCREEN_HEIGHT
 DIMENSION = 8
 SQUARE_SIZE = BOARD_HEIGHT // DIMENSION
-MAX_FPS = 144
+
+# Tahtayı ekranda nereye çizmek istiyoruz?
+# Şu anda sol üst köşeden başlatıyoruz. (0, 0)
+# İsterseniz ortalamak için:
+#   BOARD_X = (SCREEN_WIDTH - BOARD_WIDTH) // 2
+#   BOARD_Y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
+BOARD_X = 0
+BOARD_Y = 0
+
+MOVE_LOG_PANEL_WIDTH = SCREEN_WIDTH - BOARD_WIDTH
+MOVE_LOG_PANEL_HEIGHT = SCREEN_HEIGHT
+MAX_FPS = 60  # 144 yerine 60 kullanmak daha stabil olabilir
 
 IMAGES = {}
 
 def loadImages():
-    pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ', 'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
+    """Taşların görsellerini yükler ve ölçekler."""
+    pieces = ['wp', 'wR', 'wN', 'wB', 'wK', 'wQ',
+              'bp', 'bR', 'bN', 'bB', 'bK', 'bQ']
     for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (SQUARE_SIZE, SQUARE_SIZE))
+        image_path = "images/" + piece + ".png"
+        IMAGES[piece] = p.transform.scale(p.image.load(image_path), (SQUARE_SIZE, SQUARE_SIZE))
 
 def showPromotionUI(screen):
+    """Piyon terfi ekranını göster."""
     overlay = p.Surface(screen.get_size(), p.SRCALPHA)
     overlay.fill((0, 0, 0, 180))
     screen.blit(overlay, (0, 0))
@@ -71,9 +79,9 @@ def showPromotionUI(screen):
         p.display.flip()
 
     drawButtons()
-
     chosen_type = None
     waiting = True
+
     while waiting:
         for event in p.event.get():
             if event.type == p.QUIT:
@@ -90,20 +98,23 @@ def showPromotionUI(screen):
     return chosen_type
 
 def main(player_one=True, player_two=True):
+    """Oyunun ana döngüsünü başlatır."""
     global saved_friend_game_state, saved_ai_game_state
 
-    p.init()
-    screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT), p.FULLSCREEN)
-    clock = p.time.Clock()
+    # Taş görsellerini yükle
+    loadImages()
 
+    # Ses ayarları
     if ChessGlobals.is_sfx_on:
         start_sound.play()
 
+    # Arka plan müziği
     if ChessGlobals.is_sfx_on:
         p.mixer.music.load("sounds/chessgamesong.mp3")
         p.mixer.music.set_volume(0.2)
         p.mixer.music.play(-1)
 
+    # Oyun durumunu yükle
     if player_two:
         if saved_friend_game_state:
             game_state = saved_friend_game_state
@@ -120,7 +131,6 @@ def main(player_one=True, player_two=True):
     valid_moves = game_state.getValidMoves()
     move_made = False
     animate = False
-    loadImages()
     running = True
     square_selected = ()
     player_clicks = []
@@ -130,13 +140,13 @@ def main(player_one=True, player_two=True):
     move_undone = False
     move_finder_process = None
     move_log_font = p.font.SysFont("Times New Roman", 14, False, False)
-    mouse_pos = p.mouse.get_pos()
-    mouse_click = False
 
     while running:
+        # Beyazın sırası mı, siyahın sırası mı?
         human_turn = (game_state.white_to_move and player_one) or \
                      (not game_state.white_to_move and player_two)
 
+        # Oyun durumunu ekrana çiz
         drawGameState(screen, game_state, valid_moves, square_selected)
         return_button = drawMoveLog(screen, game_state, move_log_font)
 
@@ -145,43 +155,52 @@ def main(player_one=True, player_two=True):
             if e.type == p.QUIT:
                 p.quit()
                 sys.exit()
+
             elif e.type == p.MOUSEBUTTONDOWN:
                 mouse_pos = p.mouse.get_pos()
+                # "Return to Menu" butonuna tıklandı mı?
                 if return_button.collidepoint(mouse_pos):
                     if e.button == 1:
+                        # Ekrana dönmeden önce mevcut game_state'i sakla
                         if player_two:
                             saved_friend_game_state = game_state
                         else:
                             saved_ai_game_state = game_state
+
                         check_sound.stop()
                         mainMenu()
                         return
 
                 if e.button == 1:
-                    location = p.mouse.get_pos()
-                    col = location[0] // SQUARE_SIZE
-                    row = location[1] // SQUARE_SIZE
+                    # Tahtadaki bir kareye tıklandı mı?
+                    col = (mouse_pos[0]) // SQUARE_SIZE
+                    row = (mouse_pos[1]) // SQUARE_SIZE
+                    # row, col hesaplanırken BOARD_X, BOARD_Y devreye girebilir.
+                    # Ancak şu an BOARD_X=0 ve BOARD_Y=0 kullandığımız için çıkarma yapmıyoruz.
+                    # Eğer BOARD_X veya BOARD_Y != 0 olsaydı:
+                    #   col = (mouse_pos[0] - BOARD_X) // SQUARE_SIZE
+                    #   row = (mouse_pos[1] - BOARD_Y) // SQUARE_SIZE
                     if human_turn:
                         if 0 <= row < 8 and 0 <= col < 8:
                             piece = game_state.board[row][col]
                             if piece != "--":
-                                if (game_state.white_to_move and piece[0] == 'w') or \
-                                        (not game_state.white_to_move and piece[0] == 'b'):
+                                if ((game_state.white_to_move and piece[0] == 'w') or
+                                    (not game_state.white_to_move and piece[0] == 'b')):
                                     if piece_select_sound and ChessGlobals.is_sfx_on:
                                         piece_select_sound.play()
 
                         if not game_over:
-                            location = p.mouse.get_pos()
-                            col = location[0] // SQUARE_SIZE
-                            row = location[1] // SQUARE_SIZE
                             if square_selected == (row, col) or col >= 8:
                                 square_selected = ()
                                 player_clicks = []
                             else:
                                 square_selected = (row, col)
                                 player_clicks.append(square_selected)
+
                             if len(player_clicks) == 2 and human_turn:
-                                move = ChessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
+                                move = ChessEngine.Move(
+                                    player_clicks[0], player_clicks[1], game_state.board
+                                )
                                 for i in range(len(valid_moves)):
                                     if move == valid_moves[i]:
                                         animateMove(valid_moves[i], screen, game_state.board,
@@ -195,6 +214,7 @@ def main(player_one=True, player_two=True):
                                     player_clicks = [square_selected]
 
             elif e.type == p.KEYDOWN:
+                # Hamle geri alma (Z)
                 if e.key == p.K_z:
                     if len(game_state.move_log) > 0:
                         game_state.undoMove()
@@ -202,6 +222,7 @@ def main(player_one=True, player_two=True):
                         animate = False
                         game_over = False
                         move_undone = True
+                # Oyunu resetleme (R)
                 if e.key == p.K_r:
                     game_state = ChessEngine.GameState()
                     valid_moves = game_state.getValidMoves()
@@ -212,23 +233,26 @@ def main(player_one=True, player_two=True):
                     game_over = False
                     move_undone = True
 
+        # Eğer AI sırasıysa
         if not game_over and not human_turn and not move_undone:
             if not ai_thinking:
                 ai_thinking = True
                 return_queue = Queue()
-                move_finder_thread = Thread(target=ChessAI.findBestMove, args=(game_state, valid_moves, return_queue))
+                move_finder_thread = Thread(
+                    target=ChessAI.findBestMove,
+                    args=(game_state, valid_moves, return_queue)
+                )
                 move_finder_thread.start()
 
             while ai_thinking:
                 clock.tick(60)
-
                 if not move_finder_thread.is_alive():
                     ai_move = return_queue.get()
                     if ai_move is None:
                         ai_move = ChessAI.findRandomMove(valid_moves)
 
-                    animateMove(ai_move, screen, game_state.board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces)
-
+                    animateMove(ai_move, screen, game_state.board,
+                                clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces)
                     game_state.makeMove(ai_move)
                     move_made = True
                     ai_thinking = False
@@ -236,9 +260,11 @@ def main(player_one=True, player_two=True):
             drawGameState(screen, game_state, valid_moves, square_selected)
             p.display.flip()
 
+        # Bir hamle yapıldıktan sonra
         if move_made:
             if len(game_state.move_log) > 0:
                 last_move = game_state.move_log[-1]
+                # Piyon terfi
                 if last_move.is_pawn_promotion:
                     if human_turn:
                         promoted_piece_type = showPromotionUI(screen)
@@ -254,8 +280,10 @@ def main(player_one=True, player_two=True):
             animate = False
             move_undone = False
 
+            # Şah tehdit kontrolleri (check)
             in_check_now = game_state.inCheck()
             if in_check_now and not in_check_prev:
+                # Müzik durdurulabilir veya ses çalınabilir
                 p.mixer.music.pause()
                 if ChessGlobals.is_sfx_on:
                     check_sound.play()
@@ -264,10 +292,12 @@ def main(player_one=True, player_two=True):
                 p.mixer.music.unpause()
             in_check_prev = in_check_now
 
+        # Oyun ekranını çiz
         drawGameState(screen, game_state, valid_moves, square_selected)
         if not game_over:
             drawMoveLog(screen, game_state, move_log_font)
 
+        # Kazanma/berabere kontrolleri
         if game_state.checkmate:
             game_over = True
             p.mixer.music.stop()
@@ -285,119 +315,120 @@ def main(player_one=True, player_two=True):
         p.display.flip()
 
 def drawGameState(screen, game_state, valid_moves, square_selected):
+    """Tahta, taşlar ve vurgulamalar dahil genel oyun durumunu çizer."""
     drawBoard(screen)
     highlightSquares(screen, game_state, valid_moves, square_selected)
     drawPieces(screen, game_state.board)
 
 def drawBoard(screen):
+    """Board'u sol üst köşeden itibaren çizer."""
     colors = [p.Color(255, 102, 242), p.Color(123, 6, 158)]
-    for row in range(8):
-        for col in range(8):
+    for row in range(DIMENSION):
+        for col in range(DIMENSION):
             color = colors[(row + col) % 2]
-            rect = p.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+            # Board'un ekrandaki başlangıç noktaları BOARD_X, BOARD_Y
+            rect = p.Rect(BOARD_X + col * SQUARE_SIZE,
+                          BOARD_Y + row * SQUARE_SIZE,
+                          SQUARE_SIZE, SQUARE_SIZE)
             p.draw.rect(screen, color, rect)
 
 
 def highlightSquares(screen, game_state, valid_moves, square_selected):
     outer_border_rect = None
 
+    # --- Seçili karenin row, col değerlerini al ---
     if square_selected != ():
         row, col = square_selected
-        if game_state.board[row][col][0] == (
-                'w' if game_state.white_to_move else 'b'):
-            s = p.Surface((SQUARE_SIZE, SQUARE_SIZE))
 
-            for move in valid_moves:
-                if move.start_row == row and move.start_col == col and move.piece_captured != "--":
-                    capture_highlight = True
-                    break
+        # --- Hata önleme: row,col 0-7 aralığında mı? ---
+        if 0 <= row < 8 and 0 <= col < 8:
+            # Sadece geçerli (row,col) için highlight işlemlerini yap
+            if game_state.board[row][col][0] == (
+                    'w' if game_state.white_to_move else 'b'):
 
-            outer_border_rect = p.Rect(
-                (col * SQUARE_SIZE) - 3,
-                (row * SQUARE_SIZE) - 3,
-                SQUARE_SIZE + 6,
-                SQUARE_SIZE + 6
-            )
+                s = p.Surface((SQUARE_SIZE, SQUARE_SIZE), p.SRCALPHA)
 
-            for move in valid_moves:
-                if move.start_row == row and move.start_col == col:
-                    if move.piece_captured != "--":
-                        s.fill((255, 186, 0))
-                    else:
-                        s.fill((110, 203, 245))
-                    s.set_alpha(100)
-                    screen.blit(s, (move.end_col * SQUARE_SIZE, move.end_row * SQUARE_SIZE))
+                outer_border_rect = p.Rect(
+                    BOARD_X + col * SQUARE_SIZE - 3,
+                    BOARD_Y + row * SQUARE_SIZE - 3,
+                    SQUARE_SIZE + 6,
+                    SQUARE_SIZE + 6
+                )
+
+                for move in valid_moves:
+                    if move.start_row == row and move.start_col == col:
+                        if move.piece_captured != "--":
+                            s.fill((255, 186, 0))
+                        else:
+                            s.fill((110, 203, 245))
+                        s.set_alpha(100)
+                        target_x = BOARD_X + move.end_col * SQUARE_SIZE
+                        target_y = BOARD_Y + move.end_row * SQUARE_SIZE
+                        screen.blit(s, (target_x, target_y))
+
     if outer_border_rect:
-        p.draw.rect(screen, (255, 255, 255, 150), outer_border_rect, width=3)
-
-def highlightAIMove(screen, move, color=(255, 186, 0)):
-    s = p.Surface((SQUARE_SIZE, SQUARE_SIZE))
-    s.set_alpha(100)
-    s.fill(color)
-    screen.blit(s, (move.start_col * SQUARE_SIZE, move.start_row * SQUARE_SIZE))
-    screen.blit(s, (move.end_col * SQUARE_SIZE, move.end_row * SQUARE_SIZE))
-    p.display.flip()
-    p.time.wait(300)
+        p.draw.rect(screen, (255, 255, 255), outer_border_rect, width=3)
 
 def drawPieces(screen, board):
-    for row in range(8):
-        for col in range(8):
+    """Taşları, BOARD_X ve BOARD_Y offsetlerini dikkate alarak çizer."""
+    for row in range(DIMENSION):
+        for col in range(DIMENSION):
             piece = board[row][col]
             if piece != "--":
-                piece_rect = p.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
-                screen.blit(IMAGES[piece], piece_rect)
+                x_coord = BOARD_X + col * SQUARE_SIZE
+                y_coord = BOARD_Y + row * SQUARE_SIZE
+                screen.blit(IMAGES[piece], (x_coord, y_coord))
 
 def drawMoveLog(screen, game_state, font):
+    """Hamle listesini (move log) çizer ve 'Return to Menu' butonunu döndürür."""
     global scroll_offset
 
-    # --- Log Kutusu Boyutları ve Konumu ---
+    # Log kutusu boyutları
     log_box_width = int(MOVE_LOG_PANEL_WIDTH * 0.6)
     log_box_height = int(MOVE_LOG_PANEL_HEIGHT * 0.8)
     log_box_x = BOARD_WIDTH + (MOVE_LOG_PANEL_WIDTH - log_box_width) // 2
     log_box_y = (MOVE_LOG_PANEL_HEIGHT - log_box_height) // 2
 
-    # --- Arka Plan (Cam Efektli Dikdörtgen) ---
     overlay = p.Surface((log_box_width, log_box_height), p.SRCALPHA)
-    overlay.fill((0, 0, 0, 70))  # Transparan siyah
+    overlay.fill((0, 0, 0, 70))
     screen.blit(overlay, (log_box_x, log_box_y))
 
-    # --- Florasan Çerçeve: Yumuşak Renk Geçişleri ---
     color_list = [
-        (110, 203, 245),  # Mavi
-        (255, 255, 255),  # Beyaz
-        (128, 128, 128)   # Gri
+        (110, 203, 245),
+        (255, 255, 255),
+        (128, 128, 128)
     ]
     drawBreathingRectWithColorTransition(
         screen,
         colors=color_list,
         rect=(log_box_x, log_box_y, log_box_width, log_box_height),
-        transition_speed=0.02,  # Geçiş hızı
+        transition_speed=0.02,
         border_width=3,
         border_radius=15
     )
 
-    # --- Taş Adlarını Tanımlama ---
+    # Taş isimleri
     piece_names = {
         "wp": "white pawn", "wR": "white rook", "wN": "white knight", "wB": "white bishop",
-        "wQ": "white queen", "wK": "white king", "bp": "black pawn", "bR": "black rook",
-        "bN": "black knight", "bB": "black bishop", "bQ": "black queen", "bK": "black king",
+        "wQ": "white queen", "wK": "white king",
+        "bp": "black pawn", "bR": "black rook", "bN": "black knight", "bB": "black bishop",
+        "bQ": "black queen", "bK": "black king",
     }
 
-    # --- Hamle Metinlerini Hazırlama ---
     move_log = game_state.move_log
     raw_move_texts = []
     for i, move in enumerate(move_log):
         piece = piece_names.get(move.piece_moved, "unknown piece")
         start = move.getRankFile(move.start_row, move.start_col)
         end = move.getRankFile(move.end_row, move.end_col)
-        captured = (piece_names.get(move.piece_captured, "unknown piece")
-                    if move.piece_captured != "--" else None)
+        captured_piece = (piece_names.get(move.piece_captured, "unknown piece")
+                          if move.piece_captured != "--" else None)
 
         if move.is_castle_move:
             move_text = f"{i + 1}. Castling performed."
         else:
-            if captured:
-                move_text = f"{i + 1}. The {piece} moved from {start} to {end} and captured the {captured}."
+            if captured_piece:
+                move_text = f"{i + 1}. The {piece} moved from {start} to {end} and captured the {captured_piece}."
             else:
                 move_text = f"{i + 1}. The {piece} moved from {start} to {end}."
         if move.is_pawn_promotion:
@@ -405,7 +436,6 @@ def drawMoveLog(screen, game_state, font):
 
         raw_move_texts.append(move_text)
 
-    # --- Metinleri Satır Bazında Sarmalama ---
     def wrap_text(text, font, max_width):
         words = text.split(' ')
         wrapped_lines = []
@@ -423,7 +453,6 @@ def drawMoveLog(screen, game_state, font):
             wrapped_lines.append(current_line)
         return wrapped_lines
 
-    # Tüm metinleri sarmala
     line_spacing = font.get_height() + 5
     top_margin = 20
     max_text_width = log_box_width - 40
@@ -433,13 +462,11 @@ def drawMoveLog(screen, game_state, font):
         wrapped_texts.extend(wrapped)
         wrapped_texts.append("")  # Boş satır
 
-    # --- Log Surface Cache Kontrolü ---
     if not hasattr(game_state, "log_surface_cache"):
         game_state.log_surface_cache = None
 
     total_height = len(wrapped_texts) * line_spacing
     if game_state.move_log_updated or game_state.log_surface_cache is None:
-        # Yüzeyi yeniden oluştur
         log_surface = p.Surface((log_box_width, total_height), p.SRCALPHA)
         log_surface.fill((0, 0, 0, 0))
         y_offset = 0
@@ -455,7 +482,6 @@ def drawMoveLog(screen, game_state, font):
     else:
         log_surface = game_state.log_surface_cache
 
-    # --- Görünür Kısmı Çiz ---
     visible_height = log_box_height - 2 * top_margin
     max_scroll = max(0, total_height - visible_height)
     scroll_offset = max(0, min(scroll_offset, max_scroll))
@@ -463,7 +489,7 @@ def drawMoveLog(screen, game_state, font):
     clip_rect = p.Rect(0, scroll_offset, log_box_width, visible_height)
     screen.blit(log_surface, (log_box_x, log_box_y + top_margin), area=clip_rect)
 
-    # --- Scroll Bar ---
+    # Scroll bar
     if total_height > visible_height:
         scrollbar_width = 10
         scrollbar_x = log_box_x + log_box_width - scrollbar_width - 5
@@ -476,15 +502,14 @@ def drawMoveLog(screen, game_state, font):
         p.draw.rect(screen, (60, 60, 60), (scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height))
         p.draw.rect(screen, (150, 150, 150), (scrollbar_x, handle_y, scrollbar_width, handle_height))
 
-    # --- Geri Dön Butonu ---
+    # "Return to Menu" butonu
     button_width = log_box_width
     button_height = 50
     button_x = log_box_x
     button_y = log_box_y + log_box_height + 20
-
     return_button = p.Rect(button_x, button_y, button_width, button_height)
-    mouse_pos = p.mouse.get_pos()
 
+    mouse_pos = p.mouse.get_pos()
     button_color = (123, 6, 158)
     border_color = (255, 102, 242)
     text_color = (255, 255, 255)
@@ -506,11 +531,10 @@ def drawMoveLog(screen, game_state, font):
             button_y + (button_height // 2 - button_text.get_height() // 2)
         )
     )
-
     return return_button
 
-
 def handleScroll(event):
+    """Hamle listesini kaydırmak için mouse wheel kontrolü."""
     global scroll_offset
     if event.type == p.MOUSEBUTTONDOWN:
         if event.button == 4:  # Scroll up
@@ -519,6 +543,7 @@ def handleScroll(event):
             scroll_offset += 20
 
 def drawEndGameText(screen, text):
+    """Oyun bittiğinde gösterilen yazı."""
     font = p.font.SysFont("Times New Roman", 64, True, False)
 
     neon_color = (0, 0, 0)
@@ -527,13 +552,17 @@ def drawEndGameText(screen, text):
     text_object = font.render(text, True, neon_color)
     glow_object = font.render(text, True, glow_color)
 
-    for i in range (1, 5):
-        screen.blit(glow_object, (BOARD_WIDTH // 2 - text_object.get_width() // 2 + i, BOARD_HEIGHT // 2 - text_object.get_height() // 2 + i))
-
-    text_location = text_object.get_rect(center=(BOARD_WIDTH // 2, BOARD_HEIGHT // 2))
+    # Hafif gölge / neon efekti
+    for i in range(1, 5):
+        screen.blit(glow_object, (
+            BOARD_WIDTH // 2 - text_object.get_width() // 2 + i,
+            BOARD_HEIGHT // 2 - text_object.get_height() // 2 + i
+        ))
+    text_location = text_object.get_rect(center=(
+        BOARD_WIDTH // 2,
+        BOARD_HEIGHT // 2
+    ))
     screen.blit(text_object, text_location)
 
 if __name__ == "__main__":
     mainMenu()
-
-#

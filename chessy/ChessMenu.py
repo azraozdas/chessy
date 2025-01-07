@@ -2,7 +2,7 @@ import random
 import sys
 import pygame as p
 from chessy import ChessGlobals
-from ChessConstants import screen
+from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT, clock
 
 p.init()
 p.mixer.init()
@@ -12,8 +12,6 @@ if ChessGlobals.is_sfx_on:
     click_sound = p.mixer.Sound("sounds/click.mp3")
     start_game_sound = p.mixer.Sound("sounds/piece-select.mp3")
 
-SCREEN_WIDTH = p.display.Info().current_w
-SCREEN_HEIGHT = p.display.Info().current_h
 
 stars = []
 sound_on = True
@@ -82,7 +80,6 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
     width = int(width * scale_factor)
     height = int(height * scale_factor)
 
-
     if hover and p.Rect(x - width // 2, y - height // 2, width, height).collidepoint(p.mouse.get_pos()):
         width += int(20 * scale_factor)
         height += int(20 * scale_factor)
@@ -94,12 +91,17 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
     rect = p.Rect(x - width // 2, y - height // 2, width, height)
     p.draw.rect(screen, (123, 6, 158), rect, border_radius=10)
 
+    # Sarı çerçeve ekleme
+    border_color = (255, 255, 0)  # Sarı renk
+    p.draw.rect(screen, border_color, rect, 3, border_radius=10)
+
     text_surface = font.render(text, True, (255, 255, 255))
     text_x = rect.centerx - text_surface.get_width() // 2
     text_y = rect.centery - text_surface.get_height() // 2
     screen.blit(text_surface, (text_x, text_y))
 
     return rect
+
 
 def startButtonAnimation(screen, button, skip_loading=False):
     stars.clear()

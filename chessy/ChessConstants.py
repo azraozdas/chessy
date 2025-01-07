@@ -2,6 +2,8 @@ import pygame as p
 
 from chessy import ChessGlobals
 
+
+
 p.init()
 p.mixer.init()
 
