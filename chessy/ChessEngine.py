@@ -16,6 +16,7 @@ class GameState:
                               "B": self.getBishopMoves, "Q": self.getQueenMoves, "K": self.getKingMoves}
         self.white_to_move = True
         self.move_log = []
+        self.move_log_updated = False  # Hareket günlüğünün değişip değişmediğini takip eder
         self.white_king_location = (7, 4)
         self.black_king_location = (0, 4)
         self.checkmate = False
@@ -35,6 +36,7 @@ class GameState:
         self.board[move.start_row][move.start_col] = "--"
         self.board[move.end_row][move.end_col] = move.piece_moved
         self.move_log.append(move)
+        self.move_log_updated = True  # Güncelleme gerçekleşti
         self.white_to_move = not self.white_to_move
 
         if move.piece_moved == "wK":
@@ -70,6 +72,7 @@ class GameState:
     def undoMove(self):
         if len(self.move_log) != 0:
             move = self.move_log.pop()
+            self.move_log_updated = True  # Geri alma sonrası güncelleme
             self.board[move.start_row][move.start_col] = move.piece_moved
             self.board[move.end_row][move.end_col] = move.piece_captured
             self.white_to_move = not self.white_to_move

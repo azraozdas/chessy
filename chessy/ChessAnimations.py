@@ -1,5 +1,5 @@
+import math
 import random
-
 import pygame as p
 
 from chessy import ChessGlobals
@@ -7,7 +7,52 @@ from chessy.ChessConstants import move_sound, captured_sound
 
 move_channel = p.mixer.Channel(1)
 
+# Yıldızlar efektine dair global liste
 stars = []
+
+# Neon animasyonu için faz değişkeni (global)
+import pygame as p
+import math
+
+neon_phase = 0.0
+
+def lerp_color(color1, color2, t):
+    """
+    İki renk arasında t oranında lineer interpolasyon (LERP) yapar.
+    - color1, color2: Başlangıç ve bitiş renkleri (r, g, b)
+    - t: 0 ile 1 arasında bir değer (0 -> color1, 1 -> color2)
+    """
+    r = int(color1[0] + (color2[0] - color1[0]) * t)
+    g = int(color1[1] + (color2[1] - color1[1]) * t)
+    b = int(color1[2] + (color2[2] - color1[2]) * t)
+    return (r, g, b)
+
+def drawBreathingRectWithColorTransition(screen, colors, rect, transition_speed=0.02, border_width=3, border_radius=15):
+    """
+    Çerçeve rengi belirli renkler arasında yumuşak geçişlerle değişir.
+    - colors: [(r, g, b), ...] Renklerin bir listesi
+    - rect: Çerçeve tanımı (x, y, width, height)
+    - transition_speed: Renk geçiş hızı
+    - border_width: Çerçeve kalınlığı
+    - border_radius: Köşe yuvarlatma
+    """
+    global neon_phase
+
+    # Fazı artırıyoruz
+    neon_phase += transition_speed
+
+    # Geçerli renk endeksi ve bir sonraki renk
+    current_index = int(neon_phase) % len(colors)
+    next_index = (current_index + 1) % len(colors)
+
+    # Fazın kesirli kısmını kullanarak geçiş oranını hesaplıyoruz
+    t = neon_phase - int(neon_phase)
+
+    # İki renk arasında geçiş yap
+    current_color = lerp_color(colors[current_index], colors[next_index], t)
+
+    # Çerçeveyi çiz
+    p.draw.rect(screen, current_color, rect, width=border_width, border_radius=border_radius)
 
 
 def animateMove(move, screen, board, clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces):
@@ -78,6 +123,7 @@ def joyEffect(screen, row, col, SQUARE_SIZE):
         p.display.flip()
         p.time.delay(20)
 
+
 def popEffect(screen, captured_piece, row, col, SQUARE_SIZE, IMAGES, board):
     center_x = col * SQUARE_SIZE + SQUARE_SIZE // 2
     center_y = row * SQUARE_SIZE + SQUARE_SIZE // 2
@@ -88,12 +134,11 @@ def popEffect(screen, captured_piece, row, col, SQUARE_SIZE, IMAGES, board):
 
     for step in range(steps):
         current_size = start_size - (step * (start_size - min_size) // steps)
-        if current_size > 0:  # Boyut sıfır olduğunda artık çizme
+        if current_size > 0:
             scaled_piece = p.transform.scale(IMAGES[captured_piece], (current_size, current_size))
             rect = scaled_piece.get_rect(center=(center_x, center_y))
 
             drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES)
-
             screen.blit(scaled_piece, rect)
 
         p.display.flip()
@@ -101,6 +146,7 @@ def popEffect(screen, captured_piece, row, col, SQUARE_SIZE, IMAGES, board):
 
     board[row][col] = "--"
     drawSingleSquare(screen, board, row, col, SQUARE_SIZE, IMAGES)
+
 
 def growAndShrinkEffect(screen, piece, row, col, SQUARE_SIZE, IMAGES):
     center_x = col * SQUARE_SIZE + SQUARE_SIZE // 2
@@ -125,16 +171,21 @@ def growAndShrinkEffect(screen, piece, row, col, SQUARE_SIZE, IMAGES):
         p.display.flip()
         p.time.delay(20)
 
+
 def generateStars(x, y, count=40):
     global stars
     for _ in range(count):
         stars.append({
             'x': x,
             'y': y,
-            'dx': random.uniform(-4, 4),  # Stars move in random directions
+            'dx': random.uniform(-4, 4),
             'dy': random.uniform(-4, 4),
-            'size': random.randint(2, 6),  # Random star sizes
-            'color': (random.randint(200, 255), random.randint(200, 255), random.randint(200, 255)),  # Random colors
+            'size': random.randint(2, 6),
+            'color': (
+                random.randint(200, 255),
+                random.randint(200, 255),
+                random.randint(200, 255)
+            ),
             'life': random.randint(20, 60)
         })
 
@@ -148,8 +199,7 @@ def drawStars(screen):
         star['life'] -= 1
     stars = [star for star in stars if star['life'] > 0]
 
+
 if __name__ == "__main__":
     from ChessMain import main
     main()
-
-#

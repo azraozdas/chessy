@@ -236,6 +236,11 @@ class Card:
             if self.rect.collidepoint(mouse_pos):
                 self.is_flipped = not self.is_flipped
 
+    def is_visible(self, scroll_offset, screen_height):
+        # Kartın görünür olup olmadığını kontrol eder
+        card_top = self.base_y - scroll_offset
+        card_bottom = self.base_y + self.height - scroll_offset
+        return not (card_bottom < 0 or card_top > screen_height)
 
 def drawMenu(screen):
     global BACKGROUND_IMAGE
@@ -680,12 +685,15 @@ def learnScreen(screen):
         p.draw.rect(screen, scrollbar_color, (SCREEN_WIDTH - 20, 0, 16, SCREEN_HEIGHT))
         p.draw.rect(screen, scroll_knob_color, (SCREEN_WIDTH - 20, bar_pos, 16, bar_height))
 
+    scroll_velocity = 0  # Scroll hızını kontrol etmek için
+
     while running:
         screen.blit(background_image, (0, 0))
 
         title_surf = title_font.render("OPENINGS", True, (255, 255, 255))
         black_outline = title_font.render("OPENINGS", True, (0, 0, 0))
-        screen.blit(black_outline, ((SCREEN_WIDTH // 2) - (black_outline.get_width() // 2) + 3, int(20 * scale_factor) + 3))
+        screen.blit(black_outline,
+                    ((SCREEN_WIDTH // 2) - (black_outline.get_width() // 2) + 3, int(20 * scale_factor) + 3))
         screen.blit(title_surf, ((SCREEN_WIDTH // 2) - (title_surf.get_width() // 2), int(20 * scale_factor)))
 
         mouse_pos = p.mouse.get_pos()
@@ -704,10 +712,16 @@ def learnScreen(screen):
                     p.time.wait(300)
                     running = False
             elif event.type == p.MOUSEWHEEL:
-                scroll_offset -= event.y * 50
-                scroll_offset = max(0, min(scroll_offset, max_scroll))
+                scroll_velocity += event.y * -5  # Daha küçük adımlarla güncelleyin
 
-        for card in cards:
+        # Scroll işlemini yavaşlat ve yumuşat
+        scroll_velocity *= 0.9  # Hızı yavaşlat
+        scroll_offset += scroll_velocity
+        scroll_offset = max(0, min(scroll_offset, max_scroll))
+
+        # Sadece görünen kartları çizin
+        visible_cards = [card for card in cards if card.is_visible(scroll_offset, SCREEN_HEIGHT)]
+        for card in visible_cards:
             card.draw(screen, scroll_offset)
 
         draw_scrollbar()

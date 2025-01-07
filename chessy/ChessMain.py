@@ -8,7 +8,7 @@ from multiprocessing import Queue
 
 import ChessAI
 import ChessEngine
-from ChessAnimations import animateMove
+from ChessAnimations import animateMove, lerp_color, drawBreathingRectWithColorTransition
 from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound
 from ChessMenu import mainMenu, generateStars
 from chessy import ChessGlobals
@@ -16,6 +16,8 @@ from chessy import ChessGlobals
 saved_friend_game_state = None
 saved_ai_game_state = None
 
+# scroll_offset'i global tutabilir veya game_state gibi bir objenin içinde saklayabilirsiniz.
+scroll_offset = 0  # Başlangıçta 0 piksel kaydırma
 
 p.init()
 p.mixer.init()
@@ -346,42 +348,139 @@ def drawPieces(screen, board):
                 screen.blit(IMAGES[piece], piece_rect)
 
 def drawMoveLog(screen, game_state, font):
-    move_log_rect = p.Rect(BOARD_WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
-    p.draw.rect(screen, p.Color("black"), move_log_rect)
+    global scroll_offset
+
+    # --- Log Kutusu Boyutları ve Konumu ---
+    log_box_width = int(MOVE_LOG_PANEL_WIDTH * 0.6)
+    log_box_height = int(MOVE_LOG_PANEL_HEIGHT * 0.8)
+    log_box_x = BOARD_WIDTH + (MOVE_LOG_PANEL_WIDTH - log_box_width) // 2
+    log_box_y = (MOVE_LOG_PANEL_HEIGHT - log_box_height) // 2
+
+    # --- Arka Plan (Cam Efektli Dikdörtgen) ---
+    overlay = p.Surface((log_box_width, log_box_height), p.SRCALPHA)
+    overlay.fill((0, 0, 0, 70))  # Transparan siyah
+    screen.blit(overlay, (log_box_x, log_box_y))
+
+    # --- Florasan Çerçeve: Yumuşak Renk Geçişleri ---
+    color_list = [
+        (110, 203, 245),  # Mavi
+        (255, 255, 255),  # Beyaz
+        (128, 128, 128)   # Gri
+    ]
+    drawBreathingRectWithColorTransition(
+        screen,
+        colors=color_list,
+        rect=(log_box_x, log_box_y, log_box_width, log_box_height),
+        transition_speed=0.02,  # Geçiş hızı
+        border_width=3,
+        border_radius=15
+    )
+
+    # --- Taş Adlarını Tanımlama ---
+    piece_names = {
+        "wp": "white pawn", "wR": "white rook", "wN": "white knight", "wB": "white bishop",
+        "wQ": "white queen", "wK": "white king", "bp": "black pawn", "bR": "black rook",
+        "bN": "black knight", "bB": "black bishop", "bQ": "black queen", "bK": "black king",
+    }
+
+    # --- Hamle Metinlerini Hazırlama ---
     move_log = game_state.move_log
-    move_texts = []
-    for i in range(0, len(move_log), 2):
-        move_pair = f"{i //2 + 1}. {move_log[i]}"
-        if i + 1 < len(move_log):
-            move_pair += f"{move_log[i + 1]}"
-        move_texts.append(move_pair)
+    raw_move_texts = []
+    for i, move in enumerate(move_log):
+        piece = piece_names.get(move.piece_moved, "unknown piece")
+        start = move.getRankFile(move.start_row, move.start_col)
+        end = move.getRankFile(move.end_row, move.end_col)
+        captured = (piece_names.get(move.piece_captured, "unknown piece")
+                    if move.piece_captured != "--" else None)
 
-    font = p.font.SysFont("Arial", 20, True, False)
-    font = p.font.SysFont("Times New Roman", 20, True, False)
+        if move.is_castle_move:
+            move_text = f"{i + 1}. Castling performed."
+        else:
+            if captured:
+                move_text = f"{i + 1}. The {piece} moved from {start} to {end} and captured the {captured}."
+            else:
+                move_text = f"{i + 1}. The {piece} moved from {start} to {end}."
+        if move.is_pawn_promotion:
+            move_text += f" The pawn was promoted to a {piece_names.get(move.piece_moved[1], 'unknown piece')}."
 
-    max_lines = (MOVE_LOG_PANEL_HEIGHT - 80) // (font.get_height() + 10)
-    max_columns = 5
-    column_width = (MOVE_LOG_PANEL_WIDTH - 40) // max_columns
-    padding = 10
-    line_spacing = font.get_height() + 10
+        raw_move_texts.append(move_text)
 
-    for i in range(len(move_texts)):
-        row = i % max_lines
-        col = i // max_lines
+    # --- Metinleri Satır Bazında Sarmalama ---
+    def wrap_text(text, font, max_width):
+        words = text.split(' ')
+        wrapped_lines = []
+        current_line = ""
 
-        if col >= max_columns:
-            break
+        for word in words:
+            test_line = current_line + (" " if current_line else "") + word
+            width_test = font.size(test_line)[0]
+            if width_test <= max_width:
+                current_line = test_line
+            else:
+                wrapped_lines.append(current_line)
+                current_line = word
+        if current_line:
+            wrapped_lines.append(current_line)
+        return wrapped_lines
 
-        text_object = font.render(move_texts[i], True, p.Color('yellow'))
-        text_x = padding + col * column_width
-        text_y = padding + row * line_spacing
-        text_location = move_log_rect.move(text_x, text_y)
-        screen.blit(text_object, text_location)
+    # Tüm metinleri sarmala
+    line_spacing = font.get_height() + 5
+    top_margin = 20
+    max_text_width = log_box_width - 40
+    wrapped_texts = []
+    for m in raw_move_texts:
+        wrapped = wrap_text(m, font, max_text_width)
+        wrapped_texts.extend(wrapped)
+        wrapped_texts.append("")  # Boş satır
 
-    button_width = MOVE_LOG_PANEL_WIDTH - 40
+    # --- Log Surface Cache Kontrolü ---
+    if not hasattr(game_state, "log_surface_cache"):
+        game_state.log_surface_cache = None
+
+    total_height = len(wrapped_texts) * line_spacing
+    if game_state.move_log_updated or game_state.log_surface_cache is None:
+        # Yüzeyi yeniden oluştur
+        log_surface = p.Surface((log_box_width, total_height), p.SRCALPHA)
+        log_surface.fill((0, 0, 0, 0))
+        y_offset = 0
+        for line_text in wrapped_texts:
+            text_surface = font.render(line_text, True, p.Color('yellow'))
+            text_width = text_surface.get_width()
+            text_x = (log_box_width - text_width) // 2
+            log_surface.blit(text_surface, (text_x, y_offset))
+            y_offset += line_spacing
+
+        game_state.log_surface_cache = log_surface
+        game_state.move_log_updated = False
+    else:
+        log_surface = game_state.log_surface_cache
+
+    # --- Görünür Kısmı Çiz ---
+    visible_height = log_box_height - 2 * top_margin
+    max_scroll = max(0, total_height - visible_height)
+    scroll_offset = max(0, min(scroll_offset, max_scroll))
+
+    clip_rect = p.Rect(0, scroll_offset, log_box_width, visible_height)
+    screen.blit(log_surface, (log_box_x, log_box_y + top_margin), area=clip_rect)
+
+    # --- Scroll Bar ---
+    if total_height > visible_height:
+        scrollbar_width = 10
+        scrollbar_x = log_box_x + log_box_width - scrollbar_width - 5
+        scrollbar_y = log_box_y + top_margin
+        scrollbar_height = visible_height
+        handle_height = max(30, int((visible_height / total_height) * scrollbar_height))
+        handle_y_ratio = scroll_offset / max_scroll if max_scroll > 0 else 0
+        handle_y = scrollbar_y + int(handle_y_ratio * (scrollbar_height - handle_height))
+
+        p.draw.rect(screen, (60, 60, 60), (scrollbar_x, scrollbar_y, scrollbar_width, scrollbar_height))
+        p.draw.rect(screen, (150, 150, 150), (scrollbar_x, handle_y, scrollbar_width, handle_height))
+
+    # --- Geri Dön Butonu ---
+    button_width = log_box_width
     button_height = 50
-    button_x = BOARD_WIDTH + 20
-    button_y = MOVE_LOG_PANEL_HEIGHT - 55
+    button_x = log_box_x
+    button_y = log_box_y + log_box_height + 20
 
     return_button = p.Rect(button_x, button_y, button_width, button_height)
     mouse_pos = p.mouse.get_pos()
@@ -394,18 +493,19 @@ def drawMoveLog(screen, game_state, font):
         button_color = (153, 51, 204)
         if p.mouse.get_pressed()[0]:
             button_color = (90, 3, 120)
-            if ChessGlobals.is_sfx_on:
-                click_sound.play()
-            generateStars(button_x + button_width // 2, button_y + button_height // 2)
 
     p.draw.rect(screen, button_color, return_button)
     p.draw.rect(screen, border_color, return_button, 3)
 
     button_font = p.font.SysFont("Times New Roman", 28, True)
-    button_font = p.font.SysFont("Times New Roman", 28, True)
     button_text = button_font.render("Return to Menu", True, text_color)
-    screen.blit(button_text, (button_x + (button_width // 2 - button_text.get_width() // 2),
-                              button_y + (button_height // 2 - button_text.get_height() // 2)))
+    screen.blit(
+        button_text,
+        (
+            button_x + (button_width // 2 - button_text.get_width() // 2),
+            button_y + (button_height // 2 - button_text.get_height() // 2)
+        )
+    )
 
     return return_button
 
