@@ -9,5 +9,4 @@ def start_game():
 
 if __name__ == "__main__":
     start_game()
-#3
-#3#
+#3##

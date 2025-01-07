@@ -1,20 +1,13 @@
-import math
 import random
 import pygame as p
-
-from chessy import ChessGlobals
+import ChessGlobals
+from ChessGlobals import neon_phase, stars
 from chessy.ChessConstants import move_sound, captured_sound
 
 move_channel = p.mixer.Channel(1)
 
-# Yıldızlar efektine dair global liste
-stars = []
-
 # Neon animasyonu için faz değişkeni (global)
 import pygame as p
-import math
-
-neon_phase = 0.0
 
 def lerp_color(color1, color2, t):
     """
@@ -25,28 +18,18 @@ def lerp_color(color1, color2, t):
     r = int(color1[0] + (color2[0] - color1[0]) * t)
     g = int(color1[1] + (color2[1] - color1[1]) * t)
     b = int(color1[2] + (color2[2] - color1[2]) * t)
-    return (r, g, b)
+    return r, g, b
 
 def drawBreathingRectWithColorTransition(screen, colors, rect, transition_speed=0.02, border_width=3, border_radius=15):
-    """
-    Çerçeve rengi belirli renkler arasında yumuşak geçişlerle değişir.
-    - colors: [(r, g, b), ...] Renklerin bir listesi
-    - rect: Çerçeve tanımı (x, y, width, height)
-    - transition_speed: Renk geçiş hızı
-    - border_width: Çerçeve kalınlığı
-    - border_radius: Köşe yuvarlatma
-    """
-    global neon_phase
 
-    # Fazı artırıyoruz
-    neon_phase += transition_speed
+    ChessGlobals.neon_phase += transition_speed
 
     # Geçerli renk endeksi ve bir sonraki renk
-    current_index = int(neon_phase) % len(colors)
+    current_index = int(ChessGlobals.neon_phase) % len(colors)
     next_index = (current_index + 1) % len(colors)
 
     # Fazın kesirli kısmını kullanarak geçiş oranını hesaplıyoruz
-    t = neon_phase - int(neon_phase)
+    t = ChessGlobals.neon_phase - int(ChessGlobals.neon_phase)
 
     # İki renk arasında geçiş yap
     current_color = lerp_color(colors[current_index], colors[next_index], t)
@@ -173,9 +156,8 @@ def growAndShrinkEffect(screen, piece, row, col, SQUARE_SIZE, IMAGES):
 
 
 def generateStars(x, y, count=40):
-    global stars
     for _ in range(count):
-        stars.append({
+        ChessGlobals.stars.append({
             'x': x,
             'y': y,
             'dx': random.uniform(-4, 4),
@@ -191,18 +173,16 @@ def generateStars(x, y, count=40):
 
 
 def drawStars(screen):
-    global stars
-    for star in stars:
+    for star in ChessGlobals.stars:
         p.draw.circle(screen, star['color'], (int(star['x']), int(star['y'])), star['size'])
         star['x'] += star['dx']
         star['y'] += star['dy']
         star['life'] -= 1
-    stars = [star for star in stars if star['life'] > 0]
+    stars = [star for star in ChessGlobals.stars if star['life'] > 0]
 
 
 if __name__ == "__main__":
     from ChessMain import main
     main()
 
-    #
-    ##
+    ###

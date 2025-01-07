@@ -1,10 +1,14 @@
+
 import random
 import sys
-
 import pygame as p
+import self
+from pygame import surface
 
-from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT
 from chessy import ChessGlobals
+from ChessGlobals import stars, scroll_offset
+from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT
+
 
 p.init()
 p.mixer.init()
@@ -32,7 +36,7 @@ neon_circles = [
 def generateStars(x, y, count=30):
     """Ekrana rastgele yıldızlar ekler."""
     for _ in range(count):
-        stars.append({
+        ChessGlobals.stars.append({
             'x': x,
             'y': y,
             'dx': random.uniform(-3, 3),
@@ -59,14 +63,14 @@ def fade_in(screen, background, duration=2000):
         clock.tick(60)
 
 def drawStars(screen):
-    for star in stars:
+    for star in ChessGlobals.stars:
         p.draw.circle(screen, (255, 255, 0), (int(star['x']), int(star['y'])), star['size'])
         star['x'] += star['dx']
         star['y'] += star['dy']
         star['life'] -= 1
-    for star in stars[:]:
+    for star in ChessGlobals.stars[:]:
         if star['life'] <= 0:
-            stars.remove(star)
+            ChessGlobals.stars.remove(star)
 
 def play_menu_music():
     if ChessGlobals.is_sfx_on:
@@ -106,7 +110,7 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
 
 
 def startButtonAnimation(screen, button, skip_loading=False):
-    stars.clear()
+    ChessGlobals.stars.clear()
 
     if ChessGlobals.is_sfx_on:
         click_sound.play()
@@ -115,15 +119,12 @@ def startButtonAnimation(screen, button, skip_loading=False):
     start_time = p.time.get_ticks()
 
     while p.time.get_ticks() - start_time < 1000:
-        screen.fill((0, 0, 0))  # Ekranı her frame'de temizle
-        screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı yeniden çiz
         screen.blit(BACKGROUND_IMAGE, (0, 0))
         drawStars(screen)
         p.display.flip()
         p.time.Clock().tick(60)
 
     if not skip_loading:
-        screen.fill((0, 0, 0))  # Yükleme ekranı için ekranı temizle
         screen.fill((0, 0, 0))
         loading_font = p.font.SysFont("Times New Roman", 60, True)
         loading_surface = loading_font.render("Loading...", True, (255, 255, 255))
@@ -136,10 +137,6 @@ def startButtonAnimation(screen, button, skip_loading=False):
         )
         p.display.flip()
         p.time.wait(1000)
-
-    # Yükleme bittikten sonra ekranı tamamen temizle
-    screen.fill((0, 0, 0))
-    p.display.flip()
 
 def wrap_lines(lines, font, max_width):
     wrapped = []
@@ -158,7 +155,6 @@ def wrap_lines(lines, font, max_width):
             wrapped.append(current_line)
     return wrapped
 
-
 def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, margin=20):
     def wrap_text(text, font, max_width):
         words = text.split(' ')
@@ -176,35 +172,26 @@ def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, marg
         if current_line:
             wrapped_lines.append(current_line)
         return wrapped_lines
-
-    # Başlığı satırlara bölerek ortala
-    wrapped_title_lines = wrap_lines([title], big_font, box_rect.width - margin * 2) if title else []
-    wrapped_lines = wrap_lines(lines, small_font, box_rect.width - margin * 2)
-
-    # Maksimum satır sayısı (kutunun taşmasını önler)
-    max_lines = (box_rect.height - 2 * margin - len(wrapped_title_lines) * (big_font.get_height() + 5)) // (
-                small_font.get_height() + 5)
+    if title:
+        wrapped_title_lines = wrap_text(title, big_font, box_rect.width - margin * 2)
+    else:
+        wrapped_title_lines = []
+    max_text_width = box_rect.width - margin * 2
+    wrapped_lines = wrap_lines(lines, small_font, max_text_width)
+    max_lines = (box_rect.height - 2 * margin - len(wrapped_title_lines) * (big_font.get_height() + 5)) // (small_font.get_height() + 5)
     if len(wrapped_lines) > max_lines:
         wrapped_lines = wrapped_lines[:max_lines]
         if wrapped_lines:
             wrapped_lines[-1] += "..."
 
-    # Tüm metinlerin yüksekliğini hesapla (başlık + metinler)
-    title_height = len(wrapped_title_lines) * (big_font.get_height() + 5)
-    text_height = len(wrapped_lines) * (small_font.get_height() + 5)
-    total_height = title_height + text_height
-
-    # Kartın ortasında başlığı ve metinleri ortala
-    start_y = box_rect.centery - (total_height // 2)
-
+    line_spacing = small_font.get_height() + 5
     previous_clip = surface.get_clip()
     surface.set_clip(box_rect)
 
-    current_y = start_y
+    current_y = box_rect.y + margin
     for title_line in wrapped_title_lines:
         title_surf = big_font.render(title_line, True, (255, 255, 255))
-        title_x = box_rect.centerx - title_surf.get_width() // 2
-        surface.blit(title_surf, (title_x, current_y))
+        surface.blit(title_surf, (box_rect.x + margin, current_y))
         current_y += big_font.get_height() + 5
 
     if title:
@@ -212,12 +199,10 @@ def draw_text_in_box(surface, title, lines, box_rect, big_font, small_font, marg
 
     for w_line in wrapped_lines:
         line_surf = small_font.render(w_line, True, (75, 0, 130))
-        text_x = box_rect.centerx - line_surf.get_width() // 2
-        surface.blit(line_surf, (text_x, current_y))
-        current_y += small_font.get_height() + 5
+        surface.blit(line_surf, (box_rect.x + margin, current_y))
+        current_y += line_spacing
 
     surface.set_clip(previous_clip)
-
 
 class Card:
     def __init__(self, title, lines, base_x, base_y, width, height, big_font, small_font):
@@ -241,28 +226,18 @@ class Card:
         if current_y < invisible_limit_y:
             return
 
-        # Kartın arka planı çizilir
-        p.draw.rect(surface, (123, 6, 158), self.rect, border_radius=15)
-
-        # Başlığı manuel olarak satır satır böl
-        wrapped_title = self.title.split(' ')  # "ITALIAN GAME" -> ['ITALIAN', 'GAME']
-
-        # Başlığı iki satıra böl
-        if len(wrapped_title) > 1:
-            wrapped_title = [' '.join(wrapped_title[:1]), ' '.join(wrapped_title[1:])]
+        if self.is_flipped:
+            p.draw.rect(surface, (200, 100, 255), self.rect, border_radius=15)
+            draw_text_in_box(surface, "", self.lines, self.rect, self.big_font, self.small_font)
         else:
-            wrapped_title = [self.title]
-
-        title_total_height = len(wrapped_title) * (self.big_font.get_height() + 5)
-
-        # Başlığın kutu içinde tam dikey ortalanması
-        title_y = self.rect.centery - (title_total_height // 2)
-
-        for line in wrapped_title:
-            title_surf = self.big_font.render(line, True, (255, 255, 255))
-            title_x = self.rect.centerx - title_surf.get_width() // 2
-            surface.blit(title_surf, (title_x, title_y))
-            title_y += self.big_font.get_height() + 5
+            p.draw.rect(surface, (123, 6, 158), self.rect, border_radius=15)
+            wrapped_title = wrap_lines([self.title], self.big_font, self.width - 40)
+            current_y_text = self.rect.y + 20
+            for line in wrapped_title:
+                title_surf = self.big_font.render(line, True, (255, 255, 255))
+                title_x = self.rect.centerx - title_surf.get_width() // 2
+                surface.blit(title_surf, (title_x, current_y_text))
+                current_y_text += self.big_font.get_height() + 5
 
     def handle_event(self, event, mouse_pos):
         if event.type == p.MOUSEBUTTONDOWN and event.button == 1:
@@ -276,7 +251,6 @@ class Card:
         return not (card_bottom < 0 or card_top > screen_height)
 
 def drawMenu(screen):
-    global BACKGROUND_IMAGE
     running = True
     submenu_open = False
     scale_factor = SCREEN_HEIGHT / 1080
@@ -311,20 +285,21 @@ def drawMenu(screen):
         screen.blit(BACKGROUND_IMAGE, (0, 0))
         drawStars(screen)
 
-        shadow_offset_x = 10 # Yatay gölge kaydırma miktarı
-        shadow_offset_y = 8  # Dikey gölge kaydırma miktarı
+        # 3D Efekt veya Gölge Ekleme
+        shadow_offset = 10  # Gölgenin kaydırma miktarı
         shadow_color = (0, 0, 0)  # Siyah gölge
         title_color = (255, 255, 255)  # Beyaz yazı
 
-        # Gölgeyi önce çizin
+        title_surface = title_font.render('CHESSY', True, title_color)
         shadow_surface = shadow_font.render('CHESSY', True, shadow_color)
+
+        # Gölgeyi biraz aşağı ve sağa kaydır
         screen.blit(shadow_surface, (
-            (SCREEN_WIDTH // 2) - (shadow_surface.get_width() // 2) + shadow_offset_x,
-            (SCREEN_HEIGHT // 20) + shadow_offset_y
+            (SCREEN_WIDTH // 2) - (shadow_surface.get_width() // 2) + shadow_offset,
+            (SCREEN_HEIGHT // 20) + shadow_offset
         ))
 
-        # Sadece ana yazıyı çizin, tekrar çizime gerek yok
-        title_surface = title_font.render('CHESSY', True, title_color)
+        # Üzerine ana metni ekle
         screen.blit(title_surface, (
             (SCREEN_WIDTH // 2) - (title_surface.get_width() // 2),
             SCREEN_HEIGHT // 20
@@ -437,8 +412,7 @@ def drawMenu(screen):
                 sys.exit()
 
         else:
-            if submenu_open:
-                screen.blit(overlay, (0, 0))
+            screen.blit(overlay, (0, 0))
 
             hovered_computer_button = (play_with_computer is not None and play_with_computer.collidepoint(mouse_pos))
             hovered_friend_button = (play_with_friend is not None and play_with_friend.collidepoint(mouse_pos))
@@ -586,7 +560,7 @@ def learnScreen(screen):
             "2. White knight g1 to f3",
             "2...Black knight b8 to c6",
             "3. White bishop f1 to c4"]},
-        {"title": "RUY LÓPEZ", "lines": [
+        {"title": "RUY LÓPEZ (SPANISH OPENING)", "lines": [
             "1. White pawn e2 to e4",
             "1...Black pawn e7 to e5",
             "2. White knight g1 to f3",
@@ -604,7 +578,7 @@ def learnScreen(screen):
             "1. White pawn d2 to d4",
             "1...Black pawn d7 to d5",
             "2. White pawn c2 to c4"]},
-        {"title": "KING'S-INDIAN DEFENSE", "lines": [
+        {"title": "KING'S INDIAN DEFENSE", "lines": [
             "1. White pawn d2 to d4",
             "1...Black pawn g7 to g6",
             "2. White pawn c2 to c4",
@@ -767,6 +741,11 @@ def learnScreen(screen):
         scroll_offset += scroll_velocity
         scroll_offset = max(0, min(scroll_offset, max_scroll))
 
+        # Sadece görünen kartları çizin
+        visible_cards = [card for card in cards if card.is_visible(scroll_offset, SCREEN_HEIGHT)]
+        for card in visible_cards:
+            card.draw(screen, scroll_offset)
+
         draw_scrollbar()
 
         hovered_return_button = False
@@ -782,11 +761,6 @@ def learnScreen(screen):
             mouse_click,
             screen
         )
-
-        # Sadece görünen kartları çizin
-        visible_cards = [card for card in cards if card.is_visible(scroll_offset, SCREEN_HEIGHT)]
-        for card in visible_cards:
-            card.draw(screen, scroll_offset)
 
         p.display.flip()
         clock.tick(60)
@@ -807,5 +781,3 @@ def mainMenu(first_time=False):
 if __name__ == "__main__":
     mainMenu(first_time=True)
 ##
-#
-
