@@ -1,18 +1,18 @@
 import random
 import sys
-import pygame as p
-from threading import Thread
 from multiprocessing import Queue
+from threading import Thread
+
+import pygame as p
 
 import ChessAI
 import ChessEngine
-
+from ChessAnimations import animateMove, drawBreathingRectWithColorTransition
 # Sesler ve ekran bilgileri ChessConstants.py'de tanımlı
 from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT, clock
 from ChessConstants import start_sound, check_sound, click_sound, piece_select_sound
+from ChessMenu import mainMenu
 from chessy import ChessGlobals
-from ChessMenu import mainMenu, generateStars
-from ChessAnimations import animateMove, lerp_color, drawBreathingRectWithColorTransition
 
 # Global değişkenler
 saved_friend_game_state = None
@@ -101,8 +101,7 @@ def showPromotionUI(screen):
     return chosen_type
 
 def main(player_one=True, player_two=True):
-    """Oyunun ana döngüsünü başlatır."""
-    global saved_friend_game_state, saved_ai_game_state
+    from ChessGlobals import saved_ai_game_state, saved_friend_game_state
 
     # Taş görsellerini yükle
     loadImages()
@@ -164,7 +163,10 @@ def main(player_one=True, player_two=True):
                 # "Return to Menu" butonuna tıklandı mı?
                 if return_button.collidepoint(mouse_pos):
                     if e.button == 1:
-                        # Ekrana dönmeden önce mevcut game_state'i sakla
+                        button_color = (90, 3, 120)
+                        if ChessGlobals.is_sfx_on:
+                            click_sound.play()  # Tıklama sesi buraya eklendi
+                        # Mevcut oyun durumunu kaydet
                         if player_two:
                             saved_friend_game_state = game_state
                         else:
@@ -395,8 +397,7 @@ def drawPieces(screen, board):
                 screen.blit(IMAGES[piece], (x_coord, y_coord))
 
 def drawMoveLog(screen, game_state, font):
-    """Hamle listesini (move log) çizer ve 'Return to Menu' butonunu döndürür."""
-    global scroll_offset
+    from ChessGlobals import scroll_offset
 
     # Log kutusu boyutları
     log_box_width = int(MOVE_LOG_PANEL_WIDTH * 0.6)
@@ -529,10 +530,9 @@ def drawMoveLog(screen, game_state, font):
     border_color = (255, 102, 242)
     text_color = (255, 255, 255)
 
+    # Fare butonun üzerindeyse buton rengi değişir
     if return_button.collidepoint(mouse_pos):
         button_color = (153, 51, 204)
-        if p.mouse.get_pressed()[0]:
-            button_color = (90, 3, 120)
 
     p.draw.rect(screen, button_color, return_button)
     p.draw.rect(screen, border_color, return_button, 3)
@@ -548,9 +548,9 @@ def drawMoveLog(screen, game_state, font):
     )
     return return_button
 
+
 def handleScroll(event):
-    """Hamle listesini kaydırmak için mouse wheel kontrolü."""
-    global scroll_offset
+    from ChessGlobals import scroll_offset
     if event.type == p.MOUSEBUTTONDOWN:
         if event.button == 4:  # Scroll up
             scroll_offset = max(scroll_offset - 20, 0)

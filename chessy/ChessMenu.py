@@ -1,8 +1,10 @@
 import random
 import sys
+
 import pygame as p
+
+from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT
 from chessy import ChessGlobals
-from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT, clock
 
 p.init()
 p.mixer.init()
@@ -113,14 +115,13 @@ def startButtonAnimation(screen, button, skip_loading=False):
     start_time = p.time.get_ticks()
 
     while p.time.get_ticks() - start_time < 1000:
-        screen.fill((0, 0, 0))  # Ekranı her frame'de temizle
-        screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı yeniden çiz
+        screen.blit(BACKGROUND_IMAGE, (0, 0))
         drawStars(screen)
         p.display.flip()
         p.time.Clock().tick(60)
 
     if not skip_loading:
-        screen.fill((0, 0, 0))  # Yükleme ekranı için ekranı temizle
+        screen.fill((0, 0, 0))
         loading_font = p.font.SysFont("Times New Roman", 60, True)
         loading_surface = loading_font.render("Loading...", True, (255, 255, 255))
         screen.blit(
@@ -132,10 +133,6 @@ def startButtonAnimation(screen, button, skip_loading=False):
         )
         p.display.flip()
         p.time.wait(1000)
-
-    # Yükleme bittikten sonra ekranı tamamen temizle
-    screen.fill((0, 0, 0))
-    p.display.flip()
 
 def wrap_lines(lines, font, max_width):
     wrapped = []
@@ -250,13 +247,13 @@ class Card:
         return not (card_bottom < 0 or card_top > screen_height)
 
 def drawMenu(screen):
-    global BACKGROUND_IMAGE
     running = True
     submenu_open = False
     scale_factor = SCREEN_HEIGHT / 1080
 
     font = p.font.SysFont("Times New Roman", int(50 * scale_factor), True)
     title_font = p.font.SysFont("Times New Roman", int(180 * scale_factor), True)
+    shadow_font = p.font.SysFont("Times New Roman", int(180 * scale_factor), True)
     creators_font = p.font.SysFont("Times New Roman", int(20 * scale_factor), True)
     copyright_font = p.font.SysFont("Times New Roman", int(20 * scale_factor))
 
@@ -284,14 +281,25 @@ def drawMenu(screen):
         screen.blit(BACKGROUND_IMAGE, (0, 0))
         drawStars(screen)
 
-        title_font_surf = title_font.render('CHESSY', True, (255, 255, 255))
-        screen.blit(
-            title_font_surf,
-            (
-                SCREEN_WIDTH // 2 - title_font_surf.get_width() // 2,
-                SCREEN_HEIGHT // 10
-            )
-        )
+        # 3D Efekt veya Gölge Ekleme
+        shadow_offset = 10  # Gölgenin kaydırma miktarı
+        shadow_color = (0, 0, 0)  # Siyah gölge
+        title_color = (255, 255, 255)  # Beyaz yazı
+
+        title_surface = title_font.render('CHESSY', True, title_color)
+        shadow_surface = shadow_font.render('CHESSY', True, shadow_color)
+
+        # Gölgeyi biraz aşağı ve sağa kaydır
+        screen.blit(shadow_surface, (
+            (SCREEN_WIDTH // 2) - (shadow_surface.get_width() // 2) + shadow_offset,
+            (SCREEN_HEIGHT // 20) + shadow_offset
+        ))
+
+        # Üzerine ana metni ekle
+        screen.blit(title_surface, (
+            (SCREEN_WIDTH // 2) - (title_surface.get_width() // 2),
+            SCREEN_HEIGHT // 20
+        ))
 
         creators_title = creators_font.render("The creators of Chessy:", True, (255, 255, 0))
         screen.blit(creators_title, (int(20 * scale_factor), int(20 * scale_factor)))
@@ -513,6 +521,9 @@ def ControlScreen(screen):
                 sys.exit()
             if event.type == p.MOUSEBUTTONDOWN:
                 if return_button.collidepoint(mouse_pos):
+                    # Ses efekti ekleniyor
+                    if ChessGlobals.is_sfx_on:
+                        click_sound.play()
                     running = False
 
         p.display.flip()
@@ -765,4 +776,4 @@ def mainMenu(first_time=False):
 
 if __name__ == "__main__":
     mainMenu(first_time=True)
-##
+#

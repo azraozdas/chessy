@@ -1,5 +1,5 @@
-import math
 import random
+
 import pygame as p
 
 from chessy import ChessGlobals
@@ -12,7 +12,6 @@ stars = []
 
 # Neon animasyonu için faz değişkeni (global)
 import pygame as p
-import math
 
 neon_phase = 0.0
 
@@ -25,20 +24,11 @@ def lerp_color(color1, color2, t):
     r = int(color1[0] + (color2[0] - color1[0]) * t)
     g = int(color1[1] + (color2[1] - color1[1]) * t)
     b = int(color1[2] + (color2[2] - color1[2]) * t)
-    return (r, g, b)
+    return r, g, b
 
 def drawBreathingRectWithColorTransition(screen, colors, rect, transition_speed=0.02, border_width=3, border_radius=15):
-    """
-    Çerçeve rengi belirli renkler arasında yumuşak geçişlerle değişir.
-    - colors: [(r, g, b), ...] Renklerin bir listesi
-    - rect: Çerçeve tanımı (x, y, width, height)
-    - transition_speed: Renk geçiş hızı
-    - border_width: Çerçeve kalınlığı
-    - border_radius: Köşe yuvarlatma
-    """
-    global neon_phase
+    from ChessGlobals import neon_phase
 
-    # Fazı artırıyoruz
     neon_phase += transition_speed
 
     # Geçerli renk endeksi ve bir sonraki renk
@@ -173,7 +163,6 @@ def growAndShrinkEffect(screen, piece, row, col, SQUARE_SIZE, IMAGES):
 
 
 def generateStars(x, y, count=40):
-    global stars
     for _ in range(count):
         stars.append({
             'x': x,
@@ -191,7 +180,7 @@ def generateStars(x, y, count=40):
 
 
 def drawStars(screen):
-    global stars
+    from ChessGlobals import stars
     for star in stars:
         p.draw.circle(screen, star['color'], (int(star['x']), int(star['y'])), star['size'])
         star['x'] += star['dx']

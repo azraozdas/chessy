@@ -2,6 +2,7 @@ import sys
 import pygame as p
 from ChessConstants import screen, click_sound, clock
 from chessy import ChessGlobals
+from ChessMenu import draw_button, startButtonAnimation  # Animasyon fonksiyonunu içe aktar
 
 p.init()
 
@@ -9,8 +10,9 @@ SETTINGS_BACKGROUND = p.image.load("images/settingsphoto2.jpg")
 
 
 def resize_background():
-    global SETTINGS_BACKGROUND
+    from ChessGlobals import SETTINGS_BACKGROUND
     SETTINGS_BACKGROUND = p.transform.smoothscale(SETTINGS_BACKGROUND, screen.get_size())
+
 
 def settingsScreen():
     running = True
@@ -62,21 +64,32 @@ def settingsScreen():
                 p.mixer.music.stop()
                 p.mixer.stop()
 
-        return_font = p.font.SysFont("Times New Roman", 30, True)
-        return_text_surface = return_font.render("Return to Menu", True, (255, 255, 0))
-        return_button = p.Rect(0, 0, 250, 60)
-        return_button.topleft = (20, 20)
+        # Return to Menu butonu - Sadece draw_button ile çizilecek
+        return_button_width = 300
+        return_button_height = 80
+        return_button_x = 180
+        return_button_y = 70
 
-        p.draw.rect(screen, (123, 6, 158), return_button)
-        screen.blit(return_text_surface, (return_button.centerx - return_text_surface.get_width() // 2,
-                                          return_button.centery - return_text_surface.get_height() // 2))
+        return_button_rect = draw_button(
+            'Return to Menu',
+            p.font.SysFont("Times New Roman", 30, True),
+            return_button_x,
+            return_button_y,
+            return_button_width,
+            return_button_height,
+            return_button_rect.collidepoint(mouse_pos) if 'return_button_rect' in locals() else False,
+            mouse_click,
+            screen
+        )
 
-        if return_button.collidepoint(mouse_pos) and mouse_click:
-            from ChessMenu import mainMenu
-            mainMenu()
-            return
+        if return_button_rect.collidepoint(mouse_pos) and mouse_click:
+            if ChessGlobals.is_sfx_on:
+                click_sound.play()
+                startButtonAnimation(screen, return_button_rect, skip_loading=True)
+                from ChessMenu import mainMenu
+                mainMenu()
+                return
 
+        # Ekranı güncelle
         p.display.flip()
         clock.tick(60)
-
-#3#
