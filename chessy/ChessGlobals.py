@@ -18,6 +18,6 @@ saved_ai_game_state = None
 stars = []  # Veya uygun başlangıç değeri
 scroll_offset = 0
 
-#
+##
 
 
