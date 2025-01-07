@@ -101,7 +101,8 @@ def showPromotionUI(screen):
     return chosen_type
 
 def main(player_one=True, player_two=True):
-    from ChessGlobals import saved_ai_game_state, saved_friend_game_state
+    """Oyunun ana döngüsünü başlatır."""
+    global saved_friend_game_state, saved_ai_game_state
 
     # Taş görsellerini yükle
     loadImages()
@@ -163,6 +164,7 @@ def main(player_one=True, player_two=True):
                 # "Return to Menu" butonuna tıklandı mı?
                 if return_button.collidepoint(mouse_pos):
                     if e.button == 1:
+                        # Ekrana dönmeden önce mevcut game_state'i sakla
                         button_color = (90, 3, 120)
                         if ChessGlobals.is_sfx_on:
                             click_sound.play()  # Tıklama sesi buraya eklendi
@@ -309,9 +311,9 @@ def main(player_one=True, player_two=True):
             check_sound.stop()
             in_check_prev = False
             if game_state.white_to_move:
-                drawEndGameText(screen, "Black wins by checkmate")
+                drawEndGameText(screen, "Black wins by checkmate", game_state, move_log_font)
             else:
-                drawEndGameText(screen, "White wins by checkmate")
+                drawEndGameText(screen, "White wins by checkmate", game_state, move_log_font)
         elif game_state.stalemate:
             game_over = True
             drawEndGameText(screen, "Stalemate")
@@ -397,7 +399,9 @@ def drawPieces(screen, board):
                 screen.blit(IMAGES[piece], (x_coord, y_coord))
 
 def drawMoveLog(screen, game_state, font):
-    from ChessGlobals import scroll_offset
+    """Hamle listesini (move log) çizer ve 'Return to Menu' butonunu döndürür."""
+    global scroll_offset
+
 
     # Log kutusu boyutları
     log_box_width = int(MOVE_LOG_PANEL_WIDTH * 0.6)
@@ -533,6 +537,8 @@ def drawMoveLog(screen, game_state, font):
     # Fare butonun üzerindeyse buton rengi değişir
     if return_button.collidepoint(mouse_pos):
         button_color = (153, 51, 204)
+        if p.mouse.get_pressed()[0]:
+            button_color = (90, 3, 120)
 
     p.draw.rect(screen, button_color, return_button)
     p.draw.rect(screen, border_color, return_button, 3)
@@ -550,24 +556,21 @@ def drawMoveLog(screen, game_state, font):
 
 
 def handleScroll(event):
-    from ChessGlobals import scroll_offset
+    """Hamle listesini kaydırmak için mouse wheel kontrolü."""
+    global scroll_offset
     if event.type == p.MOUSEBUTTONDOWN:
         if event.button == 4:  # Scroll up
             scroll_offset = max(scroll_offset - 20, 0)
         elif event.button == 5:  # Scroll down
             scroll_offset += 20
 
-def drawEndGameText(screen, text):
-    """Oyun bittiğinde gösterilen yazı."""
+def drawEndGameText(screen, text, game_state, font):
     font = p.font.SysFont("Times New Roman", 64, True, False)
-
     neon_color = (0, 0, 0)
     glow_color = (255, 20, 147)
-
     text_object = font.render(text, True, neon_color)
     glow_object = font.render(text, True, glow_color)
 
-    # Hafif gölge / neon efekti
     for i in range(1, 5):
         screen.blit(glow_object, (
             BOARD_WIDTH // 2 - text_object.get_width() // 2 + i,
@@ -578,6 +581,8 @@ def drawEndGameText(screen, text):
         BOARD_HEIGHT // 2
     ))
     screen.blit(text_object, text_location)
+
+    drawMoveLog(screen, game_state, font)
 
 if __name__ == "__main__":
     mainMenu()
