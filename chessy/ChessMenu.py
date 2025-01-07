@@ -113,13 +113,14 @@ def startButtonAnimation(screen, button, skip_loading=False):
     start_time = p.time.get_ticks()
 
     while p.time.get_ticks() - start_time < 1000:
-        screen.blit(BACKGROUND_IMAGE, (0, 0))
+        screen.fill((0, 0, 0))  # Ekranı her frame'de temizle
+        screen.blit(BACKGROUND_IMAGE, (0, 0))  # Arka planı yeniden çiz
         drawStars(screen)
         p.display.flip()
         p.time.Clock().tick(60)
 
     if not skip_loading:
-        screen.fill((0, 0, 0))
+        screen.fill((0, 0, 0))  # Yükleme ekranı için ekranı temizle
         loading_font = p.font.SysFont("Times New Roman", 60, True)
         loading_surface = loading_font.render("Loading...", True, (255, 255, 255))
         screen.blit(
@@ -131,6 +132,10 @@ def startButtonAnimation(screen, button, skip_loading=False):
         )
         p.display.flip()
         p.time.wait(1000)
+
+    # Yükleme bittikten sonra ekranı tamamen temizle
+    screen.fill((0, 0, 0))
+    p.display.flip()
 
 def wrap_lines(lines, font, max_width):
     wrapped = []

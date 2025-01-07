@@ -50,14 +50,14 @@ def loadImages():
 def showPromotionUI(screen):
     """Piyon terfi ekranını göster."""
     overlay = p.Surface(screen.get_size(), p.SRCALPHA)
-    overlay.fill((0, 0, 0, 180))
+    overlay.fill((0, 0, 0, 180))  # Yarı saydam siyah arkaplan
     screen.blit(overlay, (0, 0))
     p.display.flip()
 
     button_width, button_height = 100, 100
     center_x = screen.get_width() // 2
     center_y = screen.get_height() // 2
-    piece_types = ["B", "N", "R", "Q"]
+    piece_types = ["B", "N", "R", "Q"]  # Bishop, Knight, Rook, Queen
     spacing = 20
     start_x = center_x - (2 * button_width + spacing + button_width // 2)
 
@@ -69,10 +69,11 @@ def showPromotionUI(screen):
         buttons.append((rect, ptype))
 
     def drawButtons():
+        """Butonları çizer."""
         for rect, ptype in buttons:
-            p.draw.rect(screen, (200, 200, 200), rect)
+            p.draw.rect(screen, (200, 200, 200), rect)  # Buton arka planı
             font = p.font.SysFont("Times New Roman", 40, True)
-            text_surface = font.render(ptype, True, (0, 0, 0))
+            text_surface = font.render(ptype, True, (0, 0, 0))  # Buton yazısı
             tx = rect.centerx - text_surface.get_width() // 2
             ty = rect.centery - text_surface.get_height() // 2
             screen.blit(text_surface, (tx, ty))
@@ -80,9 +81,8 @@ def showPromotionUI(screen):
 
     drawButtons()
     chosen_type = None
-    waiting = True
 
-    while waiting:
+    while chosen_type is None:  # Seçim yapılana kadar bekle
         for event in p.event.get():
             if event.type == p.QUIT:
                 p.quit()
@@ -91,10 +91,13 @@ def showPromotionUI(screen):
                 mouse_pos = p.mouse.get_pos()
                 for rect, ptype in buttons:
                     if rect.collidepoint(mouse_pos):
-                        chosen_type = ptype
-                        waiting = False
+                        chosen_type = ptype  # Seçim yapıldı
+                        break
         drawButtons()
 
+    # Tercih ekranından çıkış ve temizleme
+    screen.fill((0, 0, 0))  # Ekranı temizle
+    p.display.flip()
     return chosen_type
 
 def main(player_one=True, player_two=True):
