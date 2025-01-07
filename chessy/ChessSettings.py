@@ -10,7 +10,7 @@ SETTINGS_BACKGROUND = p.image.load("images/settingsphoto2.jpg")
 
 
 def resize_background():
-    from ChessGlobals import SETTINGS_BACKGROUND
+    global SETTINGS_BACKGROUND
     SETTINGS_BACKGROUND = p.transform.smoothscale(SETTINGS_BACKGROUND, screen.get_size())
 
 
