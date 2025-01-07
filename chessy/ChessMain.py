@@ -319,12 +319,21 @@ def main(player_one=True, player_two=True):
 
 def drawGameState(screen, game_state, valid_moves, square_selected):
     """Tahta, taşlar ve vurgulamalar dahil genel oyun durumunu çizer."""
+    # Önce tüm ekranı temizleyin
+    screen.fill((0, 0, 0))
+
+    # Daha sonra tahtayı ve taşları çizin
     drawBoard(screen)
     highlightSquares(screen, game_state, valid_moves, square_selected)
     drawPieces(screen, game_state.board)
 
 def drawBoard(screen):
-    """Board'u sol üst köşeden itibaren çizer."""
+    """Tahtayı sol üst köşeden itibaren çizer."""
+    # Tahtayı çizerken eski çerçeveleri temizlemek için ekranın ilgili kısmını temizle
+    board_rect = p.Rect(BOARD_X, BOARD_Y, BOARD_WIDTH, BOARD_HEIGHT)
+    p.draw.rect(screen, (0, 0, 0), board_rect)  # Siyah arka planla tahtayı temizle
+
+    # Tahta kareleri için renkler
     colors = [p.Color(255, 102, 242), p.Color(123, 6, 158)]
     for row in range(DIMENSION):
         for col in range(DIMENSION):
@@ -337,40 +346,43 @@ def drawBoard(screen):
 
 
 def highlightSquares(screen, game_state, valid_moves, square_selected):
-    outer_border_rect = None
-
-    # --- Seçili karenin row, col değerlerini al ---
+    """Seçili kare ve hamleleri vurgular."""
     if square_selected != ():
         row, col = square_selected
 
-        # --- Hata önleme: row,col 0-7 aralığında mı? ---
+        # Satır ve sütunun tahtada geçerli bir kare olduğundan emin olun
         if 0 <= row < 8 and 0 <= col < 8:
-            # Sadece geçerli (row,col) için highlight işlemlerini yap
-            if game_state.board[row][col][0] == (
-                    'w' if game_state.white_to_move else 'b'):
+            # Seçili karenin bulunduğu kareyi temizle
+            rect = p.Rect(
+                BOARD_X + col * SQUARE_SIZE,
+                BOARD_Y + row * SQUARE_SIZE,
+                SQUARE_SIZE, SQUARE_SIZE
+            )
+            color = p.Color(255, 102, 242) if (row + col) % 2 == 0 else p.Color(123, 6, 158)
+            p.draw.rect(screen, color, rect)
 
-                s = p.Surface((SQUARE_SIZE, SQUARE_SIZE), p.SRCALPHA)
+            # Geçerli hamleleri vurgula
+            s = p.Surface((SQUARE_SIZE, SQUARE_SIZE), p.SRCALPHA)
+            for move in valid_moves:
+                if move.start_row == row and move.start_col == col:
+                    s.fill((255, 186, 0) if move.piece_captured != "--" else (110, 203, 245))
+                    s.set_alpha(100)
+                    target_x = BOARD_X + move.end_col * SQUARE_SIZE
+                    target_y = BOARD_Y + move.end_row * SQUARE_SIZE
+                    screen.blit(s, (target_x, target_y))
 
-                outer_border_rect = p.Rect(
+            # Çerçeveyi çiz
+            p.draw.rect(
+                screen,
+                (255, 255, 255),  # Çerçeve rengi
+                p.Rect(
                     BOARD_X + col * SQUARE_SIZE - 3,
                     BOARD_Y + row * SQUARE_SIZE - 3,
                     SQUARE_SIZE + 6,
                     SQUARE_SIZE + 6
-                )
-
-                for move in valid_moves:
-                    if move.start_row == row and move.start_col == col:
-                        if move.piece_captured != "--":
-                            s.fill((255, 186, 0))
-                        else:
-                            s.fill((110, 203, 245))
-                        s.set_alpha(100)
-                        target_x = BOARD_X + move.end_col * SQUARE_SIZE
-                        target_y = BOARD_Y + move.end_row * SQUARE_SIZE
-                        screen.blit(s, (target_x, target_y))
-
-    if outer_border_rect:
-        p.draw.rect(screen, (255, 255, 255), outer_border_rect, width=3)
+                ),
+                width=3
+            )
 
 def drawPieces(screen, board):
     """Taşları, BOARD_X ve BOARD_Y offsetlerini dikkate alarak çizer."""
