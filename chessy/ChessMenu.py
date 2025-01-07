@@ -520,6 +520,9 @@ def ControlScreen(screen):
                 sys.exit()
             if event.type == p.MOUSEBUTTONDOWN:
                 if return_button.collidepoint(mouse_pos):
+                    # Ses efekti ekleniyor
+                    if ChessGlobals.is_sfx_on:
+                        click_sound.play()
                     running = False
 
         p.display.flip()
