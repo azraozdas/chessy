@@ -9,11 +9,11 @@ import ChessAI
 import ChessEngine
 import ChessGlobals
 from ChessAnimations import animateMove, drawBreathingRectWithColorTransition
-# Sesler ve ekran bilgileri ChessConstants.py'de tanımlı
-
-from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT, clock, start_sound, check_sound, click_sound, piece_select_sound
+from ChessConstants import screen, SCREEN_WIDTH, SCREEN_HEIGHT, clock, start_sound, check_sound, click_sound, \
+    piece_select_sound
 from ChessMenu import mainMenu
-from ChessGlobals import saved_friend_game_state, saved_ai_game_state, scroll_offset
+
+# Sesler ve ekran bilgileri ChessConstants.py'de tanımlı
 
 # Dinamik boyutlandırma
 BOARD_WIDTH = min(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -247,8 +247,10 @@ def main(player_one=True, player_two=True):
                 clock.tick(60)
                 if not move_finder_thread.is_alive():
                     ai_move = return_queue.get()
-                    if ai_move is None:
-                        ai_move = ChessAI.findRandomMove(valid_moves)
+                    if ai_move is None or len(valid_moves) == 0:
+                        game_over = True
+                        drawEndGameText(screen, "Stalemate or Checkmate")
+                        break
 
                     animateMove(ai_move, screen, game_state.board,
                                 clock, IMAGES, SQUARE_SIZE, drawBoard, drawPieces)
