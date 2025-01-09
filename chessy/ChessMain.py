@@ -1,6 +1,5 @@
 import random
 import sys
-import math
 from multiprocessing import Queue
 from threading import Thread
 
@@ -224,6 +223,7 @@ def main(player_one=True, player_two=True):
                         move_undone = True
                 # Oyunu resetleme (R)
                 if e.key == p.K_r:
+                    check_sound.stop()
                     game_state = ChessEngine.GameState()
                     valid_moves = game_state.getValidMoves()
                     square_selected = ()
@@ -299,15 +299,33 @@ def main(player_one=True, player_two=True):
         if not game_over:
             drawMoveLog(screen, game_state, move_log_font)
 
-        # Oyun biterse kazanan/berabere mesajını çiz
-        if game_state.checkmate:
-            check_sound.stop()
-            if game_state.white_to_move:
-                drawEndGameText(screen, "Black wins by checkmate")
-            else:
-                drawEndGameText(screen, "White wins by checkmate")
-        elif game_state.stalemate:
-            drawEndGameText(screen, "Stalemate")
+        # Oyun döngüsünün oyun sonu kısmında yapılan değişiklikler:
+        if game_state.checkmate or game_state.stalemate:
+            if not game_over:
+                check_sound.stop()
+                p.mixer.music.stop()
+                game_over = True
+
+                # Oyun moduna göre mesaj belirleme
+                if game_state.checkmate:
+                    if game_state.white_to_move:
+                        end_text = "Black wins by checkmate"
+                    else:
+                        end_text = "White wins by checkmate"
+                elif game_state.stalemate:
+                    end_text = "Stalemate"
+
+            # Oyun sonu mesajını ve ekranı çiz
+            drawEndGameText(screen, end_text)
+
+            # Oyun sonrasında da log ve "Return to Menu" tuşu çizilmeye devam eder
+            drawMoveLog(screen, game_state, move_log_font)
+            return_button = drawMoveLog(screen, game_state, move_log_font)
+        else:
+            # Normal oyun durumu için ekranı güncelle
+            drawGameState(screen, game_state, valid_moves, square_selected)
+            if not game_over:
+                drawMoveLog(screen, game_state, move_log_font)
 
         clock.tick(MAX_FPS)
         p.display.flip()
@@ -463,7 +481,7 @@ def drawMoveLog(screen, game_state, font):
             wrapped_lines.append(current_line)
         return wrapped_lines
 
-    line_spacing = font.get_height() + 10
+    line_spacing = font.get_height() + 5
     top_margin = 20
     max_text_width = log_box_width - 40
     wrapped_texts = []
@@ -550,7 +568,6 @@ def handleScroll(event):
         elif event.button == 5:  # Scroll down
             ChessGlobals.scroll_offset += 20
 
-
 def drawEndGameText(screen, text):
     """Oyun bittiğinde gösterilen yazıyı, yarı saydam bir dikdörtgen ve nefes alan bir çerçeve içinde çizer."""
     font = p.font.SysFont("Times New Roman", 64, True, False)
@@ -625,4 +642,4 @@ def drawEndGameText(screen, text):
 if __name__ == "__main__":
     mainMenu()
 
-#
+####
