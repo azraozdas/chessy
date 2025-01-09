@@ -223,6 +223,7 @@ def main(player_one=True, player_two=True):
                         move_undone = True
                 # Oyunu resetleme (R)
                 if e.key == p.K_r:
+                    check_sound.stop()
                     game_state = ChessEngine.GameState()
                     valid_moves = game_state.getValidMoves()
                     square_selected = ()
@@ -298,15 +299,33 @@ def main(player_one=True, player_two=True):
         if not game_over:
             drawMoveLog(screen, game_state, move_log_font)
 
-        # Oyun biterse kazanan/berabere mesajını çiz
-        if game_state.checkmate:
-            check_sound.stop()
-            if game_state.white_to_move:
-                drawEndGameText(screen, "Black wins by checkmate")
-            else:
-                drawEndGameText(screen, "White wins by checkmate")
-        elif game_state.stalemate:
-            drawEndGameText(screen, "Stalemate")
+        # Oyun döngüsünün oyun sonu kısmında yapılan değişiklikler:
+        if game_state.checkmate or game_state.stalemate:
+            if not game_over:
+                check_sound.stop()
+                p.mixer.music.stop()
+                game_over = True
+
+                # Oyun moduna göre mesaj belirleme
+                if game_state.checkmate:
+                    if game_state.white_to_move:
+                        end_text = "Black wins by checkmate"
+                    else:
+                        end_text = "White wins by checkmate"
+                elif game_state.stalemate:
+                    end_text = "Stalemate"
+
+            # Oyun sonu mesajını ve ekranı çiz
+            drawEndGameText(screen, end_text)
+
+            # Oyun sonrasında da log ve "Return to Menu" tuşu çizilmeye devam eder
+            drawMoveLog(screen, game_state, move_log_font)
+            return_button = drawMoveLog(screen, game_state, move_log_font)
+        else:
+            # Normal oyun durumu için ekranı güncelle
+            drawGameState(screen, game_state, valid_moves, square_selected)
+            if not game_over:
+                drawMoveLog(screen, game_state, move_log_font)
 
         clock.tick(MAX_FPS)
         p.display.flip()
