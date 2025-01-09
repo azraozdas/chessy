@@ -19,6 +19,7 @@ saved_ai_game_state = None
 stars = []  # Veya uygun başlangıç değeri
 scroll_offset = 0
 
-###
+
 SETTINGS_BACKGROUND = p.image.load("images/settingsphoto2.jpg")
 
+#

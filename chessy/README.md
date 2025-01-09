@@ -1,5 +1,5 @@
 # Cyberpunk Chessy Engine
-#
+
 ## Table of Contents
 * [General Info](#general-info)  
 * [Technologies](#technologies)  
