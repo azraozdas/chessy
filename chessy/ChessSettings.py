@@ -3,15 +3,14 @@ import pygame as p
 from ChessConstants import screen, click_sound, clock
 from chessy import ChessGlobals
 from ChessMenu import draw_button, startButtonAnimation  # Animasyon fonksiyonunu içe aktar
+from ChessGlobals import SETTINGS_BACKGROUND
 
 p.init()
 
-SETTINGS_BACKGROUND = p.image.load("images/settingsphoto2.jpg")
-
 
 def resize_background():
-    global SETTINGS_BACKGROUND
-    SETTINGS_BACKGROUND = p.transform.smoothscale(SETTINGS_BACKGROUND, screen.get_size())
+
+    ChessGlobals.SETTINGS_BACKGROUND = p.transform.smoothscale(ChessGlobals.SETTINGS_BACKGROUND, screen.get_size())
 
 
 def settingsScreen():
@@ -33,7 +32,7 @@ def settingsScreen():
                 p.display.set_mode((event.w, event.h), p.RESIZABLE)
                 resize_background()
 
-        screen.blit(SETTINGS_BACKGROUND, (0, 0))
+        screen.blit(ChessGlobals.SETTINGS_BACKGROUND, (0, 0))
 
         button_text = "Sound/SFX: ON" if ChessGlobals.is_sfx_on else "Sound/SFX: OFF"
         button_color = (0, 255, 0) if ChessGlobals.is_sfx_on else (128, 128, 128)
@@ -93,4 +92,4 @@ def settingsScreen():
         # Ekranı güncelle
         p.display.flip()
         clock.tick(60)
-##
+##3

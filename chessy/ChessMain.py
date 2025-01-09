@@ -462,7 +462,7 @@ def drawMoveLog(screen, game_state, font):
             wrapped_lines.append(current_line)
         return wrapped_lines
 
-    line_spacing = font.get_height() + 5
+    line_spacing = font.get_height() + 10
     top_margin = 20
     max_text_width = log_box_width - 40
     wrapped_texts = []
@@ -574,4 +574,4 @@ def drawEndGameText(screen, text):
 if __name__ == "__main__":
     mainMenu()
 
-####
+####3
