@@ -569,26 +569,75 @@ def handleScroll(event):
             ChessGlobals.scroll_offset += 20
 
 def drawEndGameText(screen, text):
-    """Oyun bittiğinde gösterilen yazı."""
+    """Oyun bittiğinde gösterilen yazıyı, yarı saydam bir dikdörtgen ve nefes alan bir çerçeve içinde çizer."""
     font = p.font.SysFont("Times New Roman", 64, True, False)
 
-    neon_color = (0, 0, 0)
-    glow_color = (255, 20, 147)
+    # Renkler
+    neon_color = (241, 196, 15)  # Metnin asıl rengi (siyah)
+    glow_color = (231,76,60)  # Glow rengi (pembe tonlarında)
 
+    # Metin objeleri
     text_object = font.render(text, True, neon_color)
     glow_object = font.render(text, True, glow_color)
 
-    # Hafif gölge / neon efekti
+    # Metni ekranın ortasına konumlayalım
+    text_rect = text_object.get_rect(center=(BOARD_WIDTH // 2, BOARD_HEIGHT // 2))
+
+    # Metnin etrafında biraz boşluk (padding)
+    padding_x = 40
+    padding_y = 30
+
+    # Dikdörtgen boyutu
+    bg_rect = p.Rect(0, 0, text_rect.width + 2 * padding_x, text_rect.height + 2 * padding_y)
+    bg_rect.center = text_rect.center
+
+    # 1) Yarı saydam beyaz arka plan (soft köşeli)
+    overlay_surf = p.Surface(bg_rect.size, p.SRCALPHA)  # Transparan destekli yüzey
+    overlay_surf.fill((0, 0, 0, 0))  # Şeffaf yüzey başlat
+
+    # Soft köşeli dikdörtgeni yüzeye çiz
+    rounded_rect = p.Surface(bg_rect.size, p.SRCALPHA)  # Yuvarlatılmış köşeler için yüzey
+    p.draw.rect(
+        rounded_rect,
+        (255, 255, 255, 100),  # RGBA (Beyaz ve transparan)
+        rounded_rect.get_rect(),
+        border_radius=15  # Köşeleri yumuşat
+    )
+
+    # Yuvarlatılmış dikdörtgeni overlay yüzeyine blit et
+    overlay_surf.blit(rounded_rect, (0, 0))
+
+    # Yüzeyi ekrana çiz
+    screen.blit(overlay_surf, bg_rect.topleft)
+
+    # 2) “Nefes alan” (soft color transition) çerçeve
+    #    drawBreathingRectWithColorTransition fonksiyonunu sizdeki örnek gibi kullanıyoruz.
+    color_list = [
+        (110, 203, 245),  # Neon mavi
+        (255, 255, 255),  # Beyaz
+        (128, 128, 128)  # Gri
+    ]
+    drawBreathingRectWithColorTransition(
+        screen,
+        colors=color_list,
+        rect=bg_rect,
+        transition_speed=0.02,  # Renk geçiş hızı
+        border_width=5,  # Çerçeve kalınlığı
+        border_radius=15  # Köşelerin yumuşaklığı
+    )
+
+    # 3) Glow efektini ekle (pembe), dikdörtgenin üstünde ama metnin altında
     for i in range(1, 5):
-        screen.blit(glow_object, (
-            BOARD_WIDTH // 2 - text_object.get_width() // 2 + i,
-            BOARD_HEIGHT // 2 - text_object.get_height() // 2 + i
-        ))
-    text_location = text_object.get_rect(center=(
-        BOARD_WIDTH // 2,
-        BOARD_HEIGHT // 2
-    ))
-    screen.blit(text_object, text_location)
+        screen.blit(
+            glow_object,
+            (
+                text_rect.x + i,
+                text_rect.y + i
+            )
+        )
+
+    # 4) Metni çiz (siyah)
+    screen.blit(text_object, text_rect)
 
 if __name__ == "__main__":
     mainMenu()
