@@ -3,8 +3,7 @@
 ## Table of Contents
 * [General Info](#general-info)  
 * [Technologies](#technologies)  
-* [Features](#features)  
-* [TODO](#todo)  
+* [Features](#features)
 * [Instructions](#instructions)  
 * [Further Development Ideas](#further-development-ideas)  
 
@@ -73,7 +72,7 @@ This project was created by a dedicated team of developers and chess enthusiasts
 
 
 ## Instructions
- - To make the game full screen,set your Screen Scaling to 100%.
+ - To make the game full screen, set your computer Screen Scaling to 100%.
  - Install the necessary packages for the gameplay.
  - Clone the repository.
 
