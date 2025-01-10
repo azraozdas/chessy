@@ -47,7 +47,8 @@ class GameState:
 
         if move.is_enpassant_move:
             self.board[move.start_row][move.end_col] = "--"  # capturing the pawn
-
+        else:
+            self.enpassant_possible = ()
         if move.piece_moved[1] == "p" and abs(move.start_row - move.end_row) == 2:  # only on 2 square pawn advance
             self.enpassant_possible = ((move.start_row + move.end_row) // 2, move.start_col)
         else:
@@ -295,15 +296,19 @@ class GameState:
                         self.board[row + move_amount][col] == "--":
                     moves.append(Move((row, col), (row + 2 * move_amount, col), self.board))
 
-        if col - 1 >= 0:
+        if col - 1 >= 0:  # Left capture
             if not piece_pinned or pin_direction == (move_amount, -1):
                 if self.board[row + move_amount][col - 1][0] == enemy_color:
                     moves.append(Move((row, col), (row + move_amount, col - 1), self.board))
+                elif (row + move_amount, col - 1) == self.enpassant_possible:
+                    moves.append(Move((row, col), (row + move_amount, col - 1), self.board, is_enpassant_move=True))
 
-        if col + 1 <= 7:
+        if col + 1 <= 7:  # Right capture
             if not piece_pinned or pin_direction == (move_amount, 1):
                 if self.board[row + move_amount][col + 1][0] == enemy_color:
                     moves.append(Move((row, col), (row + move_amount, col + 1), self.board))
+                elif (row + move_amount, col + 1) == self.enpassant_possible:
+                    moves.append(Move((row, col), (row + move_amount, col + 1), self.board, is_enpassant_move=True))
 
     def getRookMoves(self, row, col, moves):
         piece_pinned = False

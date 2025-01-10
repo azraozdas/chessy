@@ -378,7 +378,13 @@ def highlightSquares(screen, game_state, valid_moves, square_selected):
             s = p.Surface((SQUARE_SIZE, SQUARE_SIZE), p.SRCALPHA)
             for move in valid_moves:
                 if move.start_row == row and move.start_col == col:
-                    s.fill((255, 186, 0) if move.piece_captured != "--" else (110, 203, 245))
+                    # Normal hamle ve taş yeme kontrolü
+                    if move.is_enpassant_move:
+                        s.fill((255, 186, 0))   # En passant için kırmızı (örnek)
+                    elif move.piece_captured != "--":
+                        s.fill((255, 186, 0))  # Taş yeme için sarı
+                    else:
+                        s.fill((110, 203, 245))  # Normal hamle için mavi
                     s.set_alpha(100)
                     target_x = BOARD_X + move.end_col * SQUARE_SIZE
                     target_y = BOARD_Y + move.end_row * SQUARE_SIZE
