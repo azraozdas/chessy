@@ -17,8 +17,7 @@ The game offers two modes: **Play with a Friend** and **Play with the Computer (
 ### Inspiration  
 This project was influenced by tutorials and ideas from developers like Eddie Sharick, along with my personal vision for a unique chess experience.  
 
-[Eddie's YouTube Channel](https://www.youtube.com/channel/UCaEohRz5bPHywGBwmR18Qww)  
-[First Episode of "Chess Engine in Python"](https://www.youtube.com/watch?v=EnYui0e73Rs&ab_channel=EddieSharick)
+[Eddie's YouTube Channel](https://www.youtube.com/channel/UCaEohRz5bPHywGBwmR18Qww)
 
 ---
 
@@ -66,12 +65,13 @@ This project was influenced by tutorials and ideas from developers like Eddie Sh
 ### Credits
 This project was created by a dedicated team of developers and chess enthusiasts. Special thanks to the following contributors:
 
-- **[Dilay Tarhan]** 
-- **[Azra Özdaş]** 
-- **[Müslüm Selim Akşahin]**  
+- **[Dilay Tarhan / 63750626]** 
+- **[Azra Özdaş / 47786847]** 
+- **[Müslüm Selim Akşahin / 28841832]**  
 
 
 ## Instructions
+ - When you start the game please start in the ChessStarter.py
  - To make the game full screen, set your computer Screen Scaling to 100%.
  - Install the necessary packages for the gameplay.
  - Clone the repository.
