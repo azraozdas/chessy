@@ -272,10 +272,12 @@ def main(player_one=True, player_two=True):
                         promoted_piece_type = showPromotionUI(screen)
                         row, col = last_move.end_row, last_move.end_col
                         game_state.board[row][col] = last_move.piece_moved[0] + promoted_piece_type
+                        last_move.promotion_choice = promoted_piece_type
                     else:
                         promoted_piece_type = random.choice(["Q", "R", "B", "N"])
                         row, col = last_move.end_row, last_move.end_col
                         game_state.board[row][col] = last_move.piece_moved[0] + promoted_piece_type
+                        last_move.promotion_choice = promoted_piece_type
 
             valid_moves = game_state.getValidMoves()
             move_made = False
@@ -417,11 +419,11 @@ def drawMoveLog(screen, game_state, font):
 
     # Log kutusu boyutları
     log_box_width = int(MOVE_LOG_PANEL_WIDTH * 0.95)
-    log_box_height = int(MOVE_LOG_PANEL_HEIGHT * 0.90)  # Daha küçük bir yükseklik
+    log_box_height = int(MOVE_LOG_PANEL_HEIGHT * 0.90)
     log_box_x = BOARD_WIDTH + (MOVE_LOG_PANEL_WIDTH - log_box_width) // 2
 
-    # Log kutusunu biraz daha yukarı kaydır
-    log_box_y = (MOVE_LOG_PANEL_HEIGHT - log_box_height) // 4  # Daha yukarı yerleştir
+    #log kutusunun yeri
+    log_box_y = (MOVE_LOG_PANEL_HEIGHT - log_box_height) // 4
 
     overlay = p.Surface((log_box_width, log_box_height), p.SRCALPHA)
     overlay.fill((0, 0, 0, 70))
@@ -448,7 +450,6 @@ def drawMoveLog(screen, game_state, font):
         "bp": "black pawn", "bR": "black rook", "bN": "black knight", "bB": "black bishop",
         "bQ": "black queen", "bK": "black king",
     }
-
     move_log = game_state.move_log
     raw_move_texts = []
     for i, move in enumerate(move_log):
@@ -465,8 +466,12 @@ def drawMoveLog(screen, game_state, font):
                 move_text = f"{i + 1}. The {piece} moved from {start} to {end} and captured the {captured_piece}."
             else:
                 move_text = f"{i + 1}. The {piece} moved from {start} to {end}."
+
         if move.is_pawn_promotion:
-            move_text += f" The pawn was promoted to a {piece_names.get(move.piece_moved[1], 'unknown piece')}."
+            promotion_piece = move.promotion_choice if hasattr(move, 'promotion_choice') else 'Q'
+            promoted_piece = piece_names.get(f"w{promotion_piece}", "unknown piece") if move.piece_moved[0] == 'w' else piece_names.get(f"b{promotion_piece}", "unknown piece")
+            move_text += f" The pawn was promoted to a {promoted_piece}."
+
 
         raw_move_texts.append(move_text)
 
@@ -648,4 +653,3 @@ def drawEndGameText(screen, text):
 if __name__ == "__main__":
     mainMenu()
 
-#####

@@ -82,6 +82,7 @@ This project was created by a dedicated team of developers and chess enthusiasts
    git clone https://github.com/yourusername/chessy.git
    
 2. Install packages for corresponding operation system of your machine :
+
 - For Windows:
   ```bash
    pip install pygame

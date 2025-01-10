@@ -13,13 +13,12 @@ global SETTINGS_BACKGROUND
 # Varsayılan başlangıç değerleri
 next_move = None  # veya uygun başlangıç değeri
 neon_phase = 0
-#
+
 saved_friend_game_state = None
 saved_ai_game_state = None
 stars = []  # Veya uygun başlangıç değeri
 scroll_offset = 0
 
-###
+
 SETTINGS_BACKGROUND = p.image.load("images/settingsphoto2.jpg")
 
-##
