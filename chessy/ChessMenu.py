@@ -94,7 +94,7 @@ def draw_button(text, font, x, y, width, height, hover, clicked, screen):
     p.draw.rect(screen, (123, 6, 158), rect, border_radius=10)
 
     # Sarı çerçeve ekleme
-    border_color = (255, 255, 0)  # Sarı renk
+    border_color = (255, 255, 0)
     p.draw.rect(screen, border_color, rect, 3, border_radius=10)
 
     text_surface = font.render(text, True, (255, 255, 255))
@@ -310,19 +310,17 @@ def drawMenu(screen):
         screen.blit(BACKGROUND_IMAGE, (0, 0))
         drawStars(screen)
 
-        shadow_offset_x = 10 # Yatay gölge kaydırma miktarı
-        shadow_offset_y = 8  # Dikey gölge kaydırma miktarı
-        shadow_color = (0, 0, 0)  # Siyah gölge
-        title_color = (255, 255, 255)  # Beyaz yazı
+        shadow_offset_x = 10
+        shadow_offset_y = 8
+        shadow_color = (0, 0, 0)
+        title_color = (255, 255, 255)
 
-        # Gölgeyi önce çizin
         shadow_surface = shadow_font.render('CHESSY', True, shadow_color)
         screen.blit(shadow_surface, (
             (SCREEN_WIDTH // 2) - (shadow_surface.get_width() // 2) + shadow_offset_x,
             (SCREEN_HEIGHT // 20) + shadow_offset_y
         ))
 
-        # Sadece ana yazıyı çizin, tekrar çizime gerek yok
         title_surface = title_font.render('CHESSY', True, title_color)
         screen.blit(title_surface, (
             (SCREEN_WIDTH // 2) - (title_surface.get_width() // 2),
@@ -492,14 +490,14 @@ def drawMenu(screen):
 def ControlScreen(screen):
     running = True
     clock = p.time.Clock()
-    font = p.font.SysFont("Times New Roman", 90, True)  # Başlık fontu büyütüldü
+    font = p.font.SysFont("Times New Roman", 90, True)
     small_font = p.font.SysFont("Times New Roman", 50)
 
     background_image = p.image.load("images/controlscreen1.jpg")
     background_image = p.transform.scale(background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    title_color = (138, 43, 226)  # Purple (Title color)
-    control_color = (255, 255, 0)  # Yellow (Control text color)
+    title_color = (138, 43, 226)
+    control_color = (255, 255, 0)
 
     scale_factor = SCREEN_HEIGHT / 1080
     button_width = 550
@@ -732,7 +730,7 @@ def learnScreen(screen):
         p.draw.rect(screen, scrollbar_color, (SCREEN_WIDTH - 20, 0, 16, SCREEN_HEIGHT))
         p.draw.rect(screen, scroll_knob_color, (SCREEN_WIDTH - 20, bar_pos, 16, bar_height))
 
-    scroll_velocity = 0  # Scroll hızını kontrol etmek için
+    scroll_velocity = 0
 
     while running:
         screen.blit(background_image, (0, 0))
@@ -759,10 +757,10 @@ def learnScreen(screen):
                     p.time.wait(300)
                     running = False
             elif event.type == p.MOUSEWHEEL:
-                scroll_velocity += event.y * -5  # Daha küçük adımlarla güncelleyin
+                scroll_velocity += event.y * -5
 
-        # Scroll işlemini yavaşlat ve yumuşat
-        scroll_velocity *= 0.9  # Hızı yavaşlat
+
+        scroll_velocity *= 0.9
         scroll_offset += scroll_velocity
         scroll_offset = max(0, min(scroll_offset, max_scroll))
 
@@ -782,7 +780,7 @@ def learnScreen(screen):
             screen
         )
 
-        # Sadece görünen kartları çizin
+        # Sadece görünen kartları çiz
         visible_cards = [card for card in cards if card.is_visible(scroll_offset, SCREEN_HEIGHT)]
         for card in visible_cards:
             card.draw(screen, scroll_offset)
@@ -805,6 +803,5 @@ def mainMenu(first_time=False):
 
 if __name__ == "__main__":
     mainMenu(first_time=True)
-##
-#3#
+
 

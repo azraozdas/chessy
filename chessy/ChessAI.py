@@ -106,9 +106,9 @@ def findMoveNegaMaxAlphaBeta(game_state, valid_moves, depth, alpha, beta, turn_m
 def scoreBoard(game_state):
     if game_state.checkmate:
         if game_state.white_to_move:
-            return -CHECKMATE  # black wins
+            return -CHECKMATE  # siyah kazanır
         else:
-            return CHECKMATE  # white wins
+            return CHECKMATE  # beyaz kazanır
     elif game_state.stalemate:
         return STALEMATE
     score = 0
@@ -129,4 +129,3 @@ def scoreBoard(game_state):
 
 def findRandomMove(valid_moves):
     return random.choice(valid_moves)
-#3###

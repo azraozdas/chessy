@@ -16,7 +16,7 @@ class GameState:
                               "B": self.getBishopMoves, "Q": self.getQueenMoves, "K": self.getKingMoves}
         self.white_to_move = True
         self.move_log = []
-        self.move_log_updated = False  # Hareket günlüğünün değişip değişmediğini takip eder
+        self.move_log_updated = False
         self.white_king_location = (7, 4)
         self.black_king_location = (0, 4)
         self.checkmate = False
@@ -36,7 +36,7 @@ class GameState:
         self.board[move.start_row][move.start_col] = "--"
         self.board[move.end_row][move.end_col] = move.piece_moved
         self.move_log.append(move)
-        self.move_log_updated = True  # Güncelleme gerçekleşti
+        self.move_log_updated = True
         self.white_to_move = not self.white_to_move
 
         if move.piece_moved == "wK":
@@ -46,22 +46,23 @@ class GameState:
 
 
         if move.is_enpassant_move:
-            self.board[move.start_row][move.end_col] = "--"  # capturing the pawn
-
-        if move.piece_moved[1] == "p" and abs(move.start_row - move.end_row) == 2:  # only on 2 square pawn advance
+            self.board[move.start_row][move.end_col] = "--"
+        else:
+            self.enpassant_possible = ()
+        if move.piece_moved[1] == "p" and abs(move.start_row - move.end_row) == 2:
             self.enpassant_possible = ((move.start_row + move.end_row) // 2, move.start_col)
         else:
             self.enpassant_possible = ()
 
         if move.is_castle_move:
-            if move.end_col - move.start_col == 2:  # king-side castle move
+            if move.end_col - move.start_col == 2:
                 self.board[move.end_row][move.end_col - 1] = self.board[move.end_row][
-                    move.end_col + 1]  # moves the rook to its new square
-                self.board[move.end_row][move.end_col + 1] = '--'  # erase old rook
+                    move.end_col + 1]
+                self.board[move.end_row][move.end_col + 1] = '--'
             else:  # queen-side castle move
                 self.board[move.end_row][move.end_col + 1] = self.board[move.end_row][
-                    move.end_col - 2]  # moves the rook to its new square
-                self.board[move.end_row][move.end_col - 2] = '--'  # erase old rook
+                    move.end_col - 2]
+                self.board[move.end_row][move.end_col - 2] = '--'
 
         self.enpassant_possible_log.append(self.enpassant_possible)
 
@@ -299,11 +300,15 @@ class GameState:
             if not piece_pinned or pin_direction == (move_amount, -1):
                 if self.board[row + move_amount][col - 1][0] == enemy_color:
                     moves.append(Move((row, col), (row + move_amount, col - 1), self.board))
+                elif (row + move_amount, col - 1) == self.enpassant_possible:
+                    moves.append(Move((row, col), (row + move_amount, col - 1), self.board, is_enpassant_move=True))
 
         if col + 1 <= 7:
             if not piece_pinned or pin_direction == (move_amount, 1):
                 if self.board[row + move_amount][col + 1][0] == enemy_color:
                     moves.append(Move((row, col), (row + move_amount, col + 1), self.board))
+                elif (row + move_amount, col + 1) == self.enpassant_possible:
+                    moves.append(Move((row, col), (row + move_amount, col + 1), self.board, is_enpassant_move=True))
 
     def getRookMoves(self, row, col, moves):
         piece_pinned = False
@@ -518,4 +523,3 @@ class Move:
         if self.is_capture:
             move_string += "x"
         return move_string + end_square
-#3###33
