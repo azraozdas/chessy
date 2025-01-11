@@ -71,7 +71,7 @@ def drawStars(screen):
 def play_menu_music():
     if ChessGlobals.is_sfx_on:
         p.mixer.music.load("sounds/menuchessysong.mp3")
-        p.mixer.music.set_volume(0.02)
+        p.mixer.music.set_volume(0.3)
         p.mixer.music.play(-1)
 
 def stop_menu_music():
